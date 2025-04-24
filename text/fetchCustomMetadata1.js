@@ -1,4 +1,4 @@
-function fetchCustomMetadata(index) {
+function fetchCustomMetadata1(index) {
     return new Promise((resolve) => {
         const metadata = {
             ARTIST: "EKPB Digital Music ©",
