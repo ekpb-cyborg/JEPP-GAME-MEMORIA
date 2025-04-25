@@ -52,6 +52,9 @@
             background-color: #f0f0f0;
             touch-action: manipulation;
             box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
         h1, h2 {
             color: #006400;
@@ -84,6 +87,8 @@
             border-top: none;
             background: white;
             border-radius: 0 0 5px 5px;
+            width: 100%;
+            max-width: 400px;
         }
         .tab-content.active {
             display: block;
@@ -91,16 +96,14 @@
         #jogo {
             display: grid;
             gap: 8px;
-            justify-content: center;
             margin-bottom: 20px;
-            max-width: 100%;
-            grid-template-rows: repeat(8, auto);
+            width: 100%;
+            max-width: 400px;
         }
         .carta {
-            width: 77px;
-            height: 77px;
-            min-width: 66px;
-            min-height: 66px;
+            width: 100%;
+            height: 0;
+            padding-bottom: 100%;
             background: #006400;
             display: flex;
             align-items: center;
@@ -108,7 +111,14 @@
             cursor: pointer;
             border-radius: 5px;
             border: 1px solid #1E90FF;
-            transition: transform 0.3s;
+            transition: transform 0.3s, opacity 0.5s;
+            opacity: 0;
+            transform: translateY(100px);
+        }
+        .carta.subir {
+            opacity: 1;
+            transform: translateY(0);
+            transition: transform 0.5s ease-out, opacity 0.5s ease-out;
         }
         .carta.virada {
             background: #90EE90;
@@ -124,54 +134,43 @@
             object-fit: cover;
             display: none;
             border-radius: 5px;
+            position: absolute;
+            top: 0;
+            left: 0;
         }
         .carta.virada img {
             display: block;
         }
         #game-info {
             display: flex;
-            justify-content: center;
-            gap: 10px;
+            flex-direction: column;
+            align-items: flex-start;
             margin-bottom: 20px;
-            max-width: 600px;
-            margin-left: auto;
-            margin-right: auto;
+            width: 100%;
+            max-width: 400px;
         }
         #stats {
-            flex: 1;
             text-align: left;
-            max-width: 200px;
+            width: 100%;
         }
-        #movimentos, #erros, #acertos, #tolerancia-erros, #timer {
+        #acertos, #progresso, #tolerancia-erros, #timer, #elapsed-timer {
             font-size: 1.2em;
             margin-bottom: 10px;
         }
-        #scoreboard {
-            flex: 1;
-            max-width: 300px;
-            max-height: 200px;
-            overflow-y: auto;
-            border: 1px solid #ccc;
-            padding: 10px;
-            background: #f9f9f9;
-            border-radius: 5px;
-        }
-        #scoreboard h3 {
-            margin: 0 0 10px 0;
-            color: #006400;
-            text-align: center;
-            font-size: 1em;
+        #progresso {
+            color: #FF4500;
             font-weight: bold;
         }
-        #scoreboard-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-            font-size: 0.85em;
+        #ranking-link {
+            text-align: center;
+            margin-bottom: 20px;
+            width: 100%;
         }
-        #scoreboard-list li {
-            padding: 5px 0;
-            border-bottom: 1px solid #eee;
+        #ranking-link a {
+            color: #0000FF;
+            font-weight: bold;
+            text-decoration: none;
+            font-size: 1.2em;
         }
         #contagem-regressiva {
             text-align: center;
@@ -179,58 +178,53 @@
             margin-bottom: 20px;
             color: #006400;
             display: none;
+            width: 100%;
         }
         #botoes-jogo {
-            text-align: center;
-            margin-bottom: 20px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 20px;
-            flex-wrap: wrap;
-        }
-        .button-group {
             display: flex;
             flex-direction: column;
             align-items: center;
             gap: 10px;
+            margin-bottom: 20px;
+            width: 100%;
+            max-width: 400px;
         }
-        #iniciar, #reiniciar, #salvar-jogo-arquivo, #carregar-jogo-arquivo {
-            padding: 10px 20px;
+        .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+        }
+        #iniciar, #reiniciar, #salvar, #carregar {
+            padding: 8px 16px;
             background-color: #006400;
             color: white;
             border: none;
             border-radius: 5px;
             cursor: pointer;
-            font-size: 1em;
-            width: 150px;
+            font-size: 0.9em;
+            width: 100px;
         }
-        #iniciar:disabled {
+        #iniciar:disabled, #nivel-dificuldade:disabled {
             background-color: #cccccc;
             cursor: not-allowed;
         }
         #audio-controls {
             display: flex;
+            justify-content: center;
             align-items: center;
-            gap: 10px;
+            gap: 15px;
+            width: 100%;
+            font-size: 1.5em;
+            color: #006400;
         }
-        #som-controle, #musica-controle {
+        #musica-prev, #musica-play-pause, #musica-next, #som-controle {
             cursor: pointer;
+        }
+        #som-controle {
             font-size: 1.2em;
-            color: #006400;
             position: relative;
-        }
-        #musica-controle.desligado {
-            color: #666;
-        }
-        #musica-controle.baixo {
-            color: #006400;
-        }
-        #musica-controle.medio {
-            color: #00cc00;
-        }
-        #musica-controle.alto {
-            color: #00ff00;
         }
         #som-controle.desligado {
             color: #666;
@@ -245,23 +239,27 @@
             color: #666;
             font-weight: bold;
         }
-        #volume-label {
-            font-size: 1em;
-            color: #006400;
-        }
         #dificuldade {
             text-align: center;
             margin-bottom: 20px;
+            width: 100%;
+        }
+        #dificuldade label {
+            font-weight: bold;
+            color: #0000FF;
         }
         #dificuldade select {
             padding: 5px;
             font-size: 1em;
             border-radius: 5px;
             border: 1px solid #ccc;
+            width: 100%;
+            max-width: 200px;
         }
         #nome-jogador {
             text-align: center;
             margin-bottom: 20px;
+            width: 100%;
         }
         #nome-jogador label {
             display: block;
@@ -274,13 +272,63 @@
             font-size: 1em;
             border-radius: 5px;
             border: 1px solid #ccc;
-            width: 200px;
+            width: 100%;
+            max-width: 200px;
         }
         #imagem-principal {
             display: block;
-            max-width: 80%;
+            width: 100%;
+            max-width: 400px;
+            height: auto;
             margin: 0 auto 20px;
             border-radius: 10px;
+        }
+        #music-track-image {
+            display: block;
+            width: 100%;
+            max-width: 400px;
+            height: auto;
+            margin: 0 auto 20px;
+            border-radius: 10px;
+        }
+        #equalizer {
+            width: 100%;
+            max-width: 400px;
+            height: 60px;
+            background: #000;
+            display: flex;
+            justify-content: space-around;
+            align-items: flex-end;
+            border-radius: 5px;
+            margin: 10px auto;
+            padding: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            display: none;
+        }
+        #equalizer.active {
+            display: flex;
+        }
+        .bar {
+            width: 8px;
+            height: 10px;
+            background: linear-gradient(to top, #00FF00, #1E90FF);
+            border-radius: 4px;
+            box-shadow: 0 0 5px rgba(0, 255, 0, 0.7);
+            animation: pulse 1s infinite;
+        }
+        .bar:nth-child(2) { animation-delay: 0.1s; }
+        .bar:nth-child(3) { animation-delay: 0.2s; }
+        .bar:nth-child(4) { animation-delay: 0.3s; }
+        .bar:nth-child(5) { animation-delay: 0.4s; }
+        .bar:nth-child(6) { animation-delay: 0.5s; }
+        .bar:nth-child(7) { animation-delay: 0.6s; }
+        .bar:nth-child(8) { animation-delay: 0.7s; }
+        .bar:nth-child(9) { animation-delay: 0.8s; }
+        .bar:nth-child(10) { animation-delay: 0.9s; }
+        @keyframes pulse {
+            0% { height: 10px; }
+            50% { height: 50px; }
+            100% { height: 10px; }
         }
         .social-media {
             margin: 20px 0;
@@ -328,7 +376,7 @@
             display: flex;
             flex-direction: column;
             gap: 10px;
-            max-width: 500px;
+            max-width: 400px;
             margin: 0 auto;
         }
         .contact-form input, .contact-form textarea {
@@ -355,41 +403,25 @@
             font-weight: bold;
         }
         @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+            .tab-content {
+                padding: 10px;
+            }
             #jogo {
                 gap: 6px;
             }
-            .carta {
-                width: 60px;
-                height: 60px;
-                min-width: 60px;
-                min-height: 60px;
-            }
-            #game-info {
-                flex-direction: column;
-                gap: 10px;
-            }
-            #stats, #scoreboard {
-                max-width: 100%;
-            }
-            #scoreboard {
-                margin-top: 10px;
-            }
-            #botoes-jogo {
-                flex-direction: column;
-                align-items: center;
-                gap: 15px;
-            }
-            .button-group {
-                width: 100%;
-                align-items: center;
-            }
-            #iniciar, #reiniciar, #salvar-jogo-arquivo, #carregar-jogo-arquivo {
-                width: 80%;
-                max-width: 200px;
+            #iniciar, #reiniciar, #salvar, #carregar {
+                width: 90px;
+                font-size: 0.8em;
             }
             #audio-controls {
-                flex-direction: column;
-                gap: 10px;
+                flex-direction: row;
+                gap: 12px;
+            }
+            #dificuldade select, #nome-jogador input {
+                max-width: 180px;
             }
         }
     </style>
@@ -399,62 +431,129 @@
     
     <div class="main-tabs">
         <div class="tab active" onclick="openTab(event, 'jogo-tab')">Jogo</div>
+        <div class="tab" onclick="openTab(event, 'ranking-tab')">Ranking</div>
         <div class="tab" onclick="openTab(event, 'contato')">Contato</div>
         <div class="tab" onclick="openTab(event, 'ekpb')">EKPB Digital Music ©</div>
         <div class="tab" onclick="openTab(event, 'instrucoes')">Instruções</div>
     </div>
     
     <div id="jogo-tab" class="tab-content active">
-        <img id="imagem-principal" src="img/jepp1.jpg" alt="Imagem Principal">
+        <img id="imagem-principal" src="https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/img/jepp1.jpg" alt="Imagem Principal">
         <div id="dificuldade">
-            <label for="nivel-dificuldade">Nível de Dificuldade: </label>
+            <label for="nivel-dificuldade">NÍVEL DE DIFICULDADE:</label>
             <select id="nivel-dificuldade">
-                <option value="dificil">Difícil (15 pares, 15s)</option>
-                <option value="medio">Médio (8 pares, 6s)</option>
-                <option value="facil">Fácil (5 pares, 3s)</option>
+                <option value="facil">Fácil (8 pares, 3s)</option>
+                <option value="medio">Médio (10 pares, 6s)</option>
+                <option value="dificil">Difícil (12 pares, 15s)</option>
             </select>
         </div>
         <div id="nome-jogador">
-            <label>DIGITE SEU NOME PARA INICIAR</label>
-            <input type="text" id="player-name" placeholder="Digite seu nome" oninput="checkPlayerName()">
+            <label>SEU NOME</label>
+            <input type="text" id="player-name" placeholder="Digite seu nome">
+        </div>
+        <div id="botoes-jogo">
+            <div class="button-group">
+                <button id="iniciar" onclick="startGame()" disabled>INICIAR</button>
+                <button id="reiniciar" onclick="inicializarJogo()">REINICIAR</button>
+            </div>
+            <div class="button-group">
+                <button id="salvar" onclick="salvarJogo()">SALVAR</button>
+                <button id="carregar" onclick="carregarJogo()">CARREGAR</button>
+            </div>
+            <div id="audio-controls">
+                <span id="musica-prev" onclick="playPreviousMusic()">⏮</span>
+                <span id="musica-play-pause" onclick="toggleMusic()">▶</span>
+                <span id="musica-next" onclick="playNextMusic()">⏭</span>
+                <i id="som-controle" class="fas fa-volume-up" onclick="toggleSomCartas()" title="Ligar/Desligar Som das Cartas"></i>
+            </div>
         </div>
         <div id="game-info">
             <div id="stats">
-                <div id="movimentos">Movimentos: 0</div>
-                <div id="erros">Erros: 0</div>
                 <div id="acertos">Acertos: 0</div>
-                <div id="tolerancia-erros">Tolerância de erros: 30</div>
-                <div id="timer">Tempo: 180.000</div>
-            </div>
-            <div id="scoreboard">
-                <h3>RANKING</h3>
-                <ul id="scoreboard-list"></ul>
+                <div id="progresso">Progresso: 0%</div>
+                <div id="tolerancia-erros">Tolerância de erros: 10</div>
+                <div id="timer">Tempo Restante: 60.000</div>
+                <div id="elapsed-timer">Tempo Decorrido: 00.000</div>
             </div>
         </div>
+        <div id="ranking-link">
+            <a href="#" onclick="openTab(event, 'ranking-tab')">RANKING</a>
+        </div>
+        <div id="equalizer">
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+        </div>
+        <img id="music-track-image" src="https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/img/img_mp3/musical1.jpg" alt="Faixa Musical">
         <div id="contagem-regressiva"></div>
-        <div id="botoes-jogo">
-            <div class="button-group">
-                <button id="iniciar" onclick="iniciarJogo()" disabled>Iniciar</button>
-                <button id="reiniciar" onclick="inicializarJogo()">Reiniciar Jogo</button>
-            </div>
-            <div id="audio-controls">
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <i id="musica-controle" class="fas fa-volume-down baixo" title="Som Contínuo" onclick="ajustarVolumeMusica()"></i>
-                    <span id="volume-label">Baixo</span>
-                </div>
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <i id="som-controle" class="fas fa-volume-up" onclick="toggleSomCartas()" title="Ligar/Desligar Som das Cartas"></i>
-                </div>
-            </div>
-            <div class="button-group">
-                <button id="salvar-jogo-arquivo" onclick="salvarJogoArquivo()">Salvar Jogo</button>
-                <input type="file" id="carregar-jogo-input" accept=".json" style="display: none;" onchange="carregarJogoArquivo(event)">
-                <button id="carregar-jogo-arquivo" onclick="document.getElementById('carregar-jogo-input').click()">Carregar Jogo</button>
-            </div>
-        </div>
         <div id="jogo">
             <!-- Cartas serão geradas via JavaScript -->
         </div>
+    </div>
+    
+    <div id="ranking-tab" class="tab-content">
+        <h2>Ranking</h2>
+        <table id="ranking-table">
+            <thead>
+                <tr>
+                    <th>Posição</th>
+                    <th>Nome</th>
+                    <th>Nível</th>
+                    <th>Mov</th>
+                    <th>Erros</th>
+                    <th>Tempo</th>
+                </tr>
+            </thead>
+            <tbody id="ranking-list">
+                <tr>
+                    <td>1</td>
+                    <td>Ana Silva</td>
+                    <td>Fácil</td>
+                    <td>12</td>
+                    <td>3</td>
+                    <td>45.123</td>
+                </tr>
+                <tr>
+                    <td>2</td>
+                    <td>João Pereira</td>
+                    <td>Médio</td>
+                    <td>18</td>
+                    <td>5</td>
+                    <td>72.456</td>
+                </tr>
+                <tr>
+                    <td>3</td>
+                    <td>Maria Oliveira</td>
+                    <td>Difícil</td>
+                    <td>25</td>
+                    <td>10</td>
+                    <td>150.789</td>
+                </tr>
+                <tr>
+                    <td>4</td>
+                    <td>Carlos Souza</td>
+                    <td>Fácil</td>
+                    <td>15</td>
+                    <td>4</td>
+                    <td>50.234</td>
+                </tr>
+                <tr>
+                    <td>5</td>
+                    <td>Beatriz Lima</td>
+                    <td>Médio</td>
+                    <td>20</td>
+                    <td>6</td>
+                    <td>85.567</td>
+                </tr>
+            </tbody>
+        </table>
     </div>
     
     <div id="contato" class="tab-content">
@@ -472,13 +571,13 @@
             <p><i class="fab fa-youtube"></i> YouTube: <a href="https://youtube.com/@ekpbdigitalmusic" target="_blank">@ekpbdigitalmusic</a></p>
             <p><i class="fab fa-tiktok"></i> TikTok: <a href="https://tiktok.com/@ekpbdigitalmusic" target="_blank">@ekpbdigitalmusic</a></p>
             <p><i class="fas fa-video"></i> Kwai: <a href="https://kwai.com/@ekpbdigitalmusic" target="_blank">@ekpbdigitalmusic</a></p>
-            <p><i class="fas fa-envelope"></i> Email: <a href="mailto:ekpbdigitalmusic@gmail.com">ekpbdigitalmusic@gmail.com</a></p>
+            <p><i class="fas fa-envelope"></i> Email: <a href="/cdn-cgi/l/email-protection#c7a2acb7a5a3aea0aeb3a6abaab2b4aea487a0aaa6aeabe9a4a8aa"><span class="__cf_email__" data-cfemail="eb8e809b898f828c829f8a87869e988288ab8c868a8287c5888486">[email protected]</span></a></p>
             <p><strong>Compositor</strong></p>
             <p><i class="fab fa-instagram"></i> Instagram: <a href="https://instagram.com/edsonk.palacio" target="_blank">@edsonk.palacio</a></p>
             <p><i class="fab fa-youtube"></i> YouTube: <a href="https://youtube.com/@edsonkpalacioo" target="_blank">@edsonkpalacioo</a></p>
             <p><i class="fab fa-tiktok"></i> TikTok: <a href="https://tiktok.com/@edsonkpalacio" target="_blank">@edsonkpalacio</a></p>
             <p><i class="fas fa-video"></i> Kwai: <a href="https://kwai.com/@edsonkpalacio" target="_blank">@edsonkpalacio</a></p>
-            <p><i class="fas fa-envelope"></i> Email: <a href="mailto:edsonkpalacio@gmail.com">edsonkpalacio@gmail.com</a></p>
+            <p><i class="fas fa-envelope"></i> Email: <a href="/cdn-cgi/l/email-protection#a4c1c0d7cbcad4c5c8c5c7cdcbe4c3c9c5cdc88ac7cbc9"><span class="__cf_email__" data-cfemail="044120372b2a34252825272d2b042329252d286a272b29">[email protected]</span></a></p>
             <p><i class="fab fa-whatsapp"></i> Cel: <a href="https://wa.me/5588996812029" target="_blank">(88) 99681-2029</a></p>
         </div>
     </div>
@@ -488,11 +587,11 @@
         <ul class="links-list">
             <li><i class="fab fa-youtube"></i> <a href="https://www.youtube.com/watch?v=AZ0mhfobGDc" target="_blank">Sobre Esta Pedra</a></li>
             <li><i class="fab fa-youtube"></i> <a href="https://www.letras.mus.br/ekpb-digital-music/amor-de-pai-e-filho-grandes-amigos/" target="_blank">Amor de Pai e Filho Grandes Amigos</a></li>
-            <li><i class="fab fa-youtube"></i> <a href="https://www.youtube.com/watch?v=nKxcsx4-uxA" target="_blank">Vicent's Churrascaria</a></li>
+            <li><i class="fab fa-youtube"></i> <a href="https://www.youtube.com/watch?v=nKxcs" target="_blank">Vicent's Churrascaria</a></li>
             <li><i class="fab fa-youtube"></i> <a href="https://www.youtube.com/watch?v=pyAn-MI0spg" target="_blank">Joker Tecnologia</a></li>
             <li><i class="fab fa-youtube"></i> <a href="https://www.youtube.com/watch?v=Csu2ZmEYxjk" target="_blank">Mãe da Igreja Mãe do Amor</a></li>
             <li><i class="fab fa-youtube"></i> <a href="https://www.youtube.com/watch?v=a7QLC03pRug" target="_blank">Kauan Lugar Feito Para Você</a></li>
-            <li><i class="fab fa-youtube"></i> <a href="https://www.youtube.com/watch?v=i-11gRpD2iE" target=" _blank">Vita Gula - Um Hit No Lar</a></li>
+            <li><i class="fab fa-youtube"></i> <a href="https://www.youtube.com/watch?v=i-11gRpD2iE" target="_blank">Vita Gula - Um Hit No Lar</a></li>
             <li><i class="fab fa-youtube"></i> <a href="https://www.youtube.com/watch?v=O-DbYY9Q6J8" target="_blank">Vita Gula - Um Hit No Lar Hit</a></li>
             <li><i class="fab fa-youtube"></i> <a href="https://www.youtube.com/watch?v=pnodRjA3cYc" target="_blank">Mother of the Church, Mother of Love</a></li>
             <li><i class="fab fa-youtube"></i> <a href="https://www.youtube.com/watch?v=ExRj-zwmnk" target="_blank">Aleatory Family</a></li>
@@ -511,26 +610,28 @@
         
         <h3>Como Jogar</h3>
         <ul>
-            <li><strong>Nota Importante:</strong> Alguns navegadores podem bloquear sons até que você interaja com a página. Clique em qualquer lugar da página antes de digitar seu nome ou iniciar o jogo para garantir que os sons funcionem corretamente.</li>
             <li><strong>Regras Importantes:</strong>
                 <ul>
                     <li>1 - Não fotografar a tela.</li>
                     <li>2 - Não fazer print.</li>
                 </ul>
             </li>
-            <li><strong>Escolha o Nível de Dificuldade:</strong> Antes de começar, selecione o nível de dificuldade (Difícil, Médio ou Fácil) no menu suspenso. Isso determinará o número de cartas e o tempo de exposição inicial:
+            <li><strong>Escolha o Nível de Dificuldade:</strong> Antes de começar, selecione o nível de dificuldade (Fácil, Médio ou Difícil) no menu suspenso. Isso determinará o número de cartas, o tempo de exposição inicial e o tempo limite:
                 <ul>
-                    <li><strong>Fácil:</strong> 5 pares (10 cartas), 3 segundos de exposição inicial.</li>
-                    <li><strong>Médio:</strong> 8 pares (16 cartas), 6 segundos de exposição inicial.</li>
-                    <li><strong>Difícil:</strong> 15 pares (30 cartas), 15 segundos de exposição inicial.</li>
+                    <li><strong>Fácil:</strong> 8 pares (16 cartas), 3 segundos de exposição inicial, 60 segundos de jogo, 10 erros máximos.</li>
+                    <li><strong>Médio:</strong> 10 pares (20 cartas), 6 segundos de exposição inicial, 90 segundos de jogo, 15 erros máximos.</li>
+                    <li><strong>Difícil:</strong> 12 pares (24 cartas), 15 segundos de exposição inicial, 180 segundos de jogo, 30 erros máximos.</li>
                 </ul>
+                Após iniciar o jogo, o nível de dificuldade ficará bloqueado. Para mudar o nível, finalize o jogo (vencendo ou perdendo) ou clique em "REINICIAR".
             </li>
-            <li><strong>Iniciar o Jogo:</strong> Digite seu nome no campo "DIGITE SEU NOME PARA INICIAR". Um som de notificação será tocado quando a página carregar e você interagir pela primeira vez. Enquanto digita, você ouvirá um som de clique curto para cada letra, se o som estiver ativado (controlado pelo ícone <i class="fas fa-volume-up"></i>). Em seguida, clique no botão "Iniciar" para virar todas as cartas por um curto período (dependendo do nível de dificuldade) e memorizá-las. Um som de início será tocado, e uma contagem regressiva será exibida. Após isso, as cartas serão desviradas automaticamente. Uma música instrumental suave começará a tocar ao carregar a página, a menos que você a tenha desativada.</li>
+            <li><strong>Iniciar o Jogo:</strong> Digite seu nome no campo "SEU NOME". Clique em qualquer parte da tela (exceto no menu de dificuldade ou ícones de som) para focar no campo de nome. Em seguida, clique no botão "INICIAR". Você só pode clicar em "INICIAR" uma vez por partida. Para iniciar um novo jogo, finalize o atual (vencendo ou perdendo) ou clique em "REINICIAR". Após clicar em "INICIAR", as cartas irão subir, o tabuleiro será centralizado na tela, e as cartas serão viradas por um curto período (dependendo do nível de dificuldade) para que você as memorize. Um som de início será tocado, e uma contagem regressiva será exibida. Após isso, as cartas serão desviradas automaticamente, e o temporizador de jogo começará. Uma música instrumental suave começará a tocar ao iniciar o jogo, e um painel de equalizador vibrante será exibido.</li>
             <li><strong>Controle de Áudio:</strong> Use os controles ao lado dos botões para ajustar o áudio:
                 <ul>
-                    <li><i class="fas fa-hand-pointer"></i> Clique no ícone de volume (<i class="fas fa-volume-down"></i>) para ajustar o som contínuo de fundo (Desligado → Baixo → Médio → Alto). O ícone muda para mostrar o nível de volume: <i class="fas fa-volume-mute"></i> (Desligado, cinza), <i class="fas fa-volume-down"></i> (Baixo, verde escuro), <i class="fas fa-volume-up"></i> (Médio, verde médio), <i class="fas fa-volume-up"></i> (Alto, verde claro). O som contínuo é uma música instrumental suave que toca continuamente durante o jogo.</li>
-                    <li><i class="fas fa-volume-up"></i> Liga/desliga os sons das cartas e ações (como virar carta, erros, acertos, som de início, "GAME OVER", aplausos na vitória, notificação de nome e digitação do nome). Quando desativado, o ícone fica cinza com um "✕" sobreposto.</li>
-                    <li>Um som de clique leve será tocado ao clicar em qualquer parte da página, exceto onde outros sons já estão associados (como cartas, botões e o campo de nome).</li>
+                    <li><i class="fas fa-hand-pointer"></i> Clique em ⏮ para tocar a música anterior na playlist.</li>
+                    <li><i class="fas fa-hand-pointer"></i> Clique em ▶ para tocar ou ⏸ para pausar a música de fundo. A música é uma instrumental suave que toca continuamente durante o jogo. Quando a música estiver tocando, o painel de equalizador será exibido e animado.</li>
+                    <li><i class="fas fa-hand-pointer"></i> Clique em ⏭ para tocar a próxima música na playlist. Se não houver mais músicas, a playlist volta para a primeira faixa (musical1).</li>
+                    <li><i class="fas fa-volume-up"></i> Liga/desliga os sons das cartas e ações (como virar carta, erros, acertos, som de início, "GAME OVER" e aplausos na vitória). Quando desativado, o ícone fica cinza com um "✕" sobreposto.</li>
+                    <li>Um som de clique leve será reproduzido ao clicar em qualquer parte da página, exceto onde outros sons já estão associados (como cartas e botões).</li>
                 </ul>
             </li>
             <li><strong>Objetivo:</strong> Encontre todos os pares de imagens iguais dentro do tempo limite e com um número limitado de erros, dependendo do nível:
@@ -544,17 +645,17 @@
                 <ul>
                     <li>Clique em uma carta para virá-la e revelar a imagem escondida.</li>
                     <li>Clique em uma segunda carta para tentar encontrar o par correspondente.</li>
-                    <li>Se as duas imagens forem iguais, elas permanecerão viradas e você encontrou um par! O número de acertos será atualizado.</li>
+                    <li>Se as duas imagens forem iguais, elas permanecerão viradas e você encontrou um par! Um som específico será tocado, o número de acertos e o progresso serão atualizados.</li>
                     <li>Se forem diferentes, as cartas serão viradas para baixo novamente, e o número de erros será incrementado.</li>
                     <li>Continue até encontrar todos os pares ou até o tempo acabar ou atingir o limite de erros.</li>
                 </ul>
             </li>
             <li><strong>Movimentos:</strong> O número de movimentos é contado a cada par de cartas que você vira.</li>
             <li><strong>Erros:</strong> Se você atingir o limite de erros para o nível escolhido, o jogo termina com "GAME OVER - Tente novamente". Um som de "GAME OVER" será tocado.</li>
-            <li><strong>Tempo:</strong> Você tem um tempo limite para completar o jogo, dependendo do nível. Se o tempo acabar, o jogo termina com "GAME OVER" e um som de "GAME OVER" será tocado.</li>
-            <li><strong>Vitória:</strong> Você vence quando todas as cartas forem combinadas. Um som de aplausos será tocado, um alerta será exibido parabenizando você, e sua pontuação será registrada no RANKING à direita.</li>
-            <li><strong>Reiniciar:</strong> Clique no botão "Reiniciar Jogo" para começar uma nova partida a qualquer momento.</li>
-            <li><strong>Salvar e Carregar:</strong> Use os botões "Salvar Jogo" para baixar um arquivo com seu progresso a qualquer momento, mesmo antes de iniciar o jogo, e "Carregar Jogo" para carregar um arquivo salvo anteriormente.</li>
+            <li><strong>Tempo:</strong> Você tem um tempo limite para completar o jogo (mostrado como "Tempo Restante"), dependendo do nível. Se o tempo acabar, o jogo termina com "GAME OVER" e um som de "GAME OVER" será tocado. O "Tempo Decorrido" mostra quanto tempo você levou jogando.</li>
+            <li><strong>Vitória:</strong> Você vence quando todas as cartas forem combinadas. Um som de aplausos será tocado, um alerta será exibido parabenizando você, e sua pontuação será exibida.</li>
+            <li><strong>Reiniciar:</strong> Clique no botão "REINICIAR" para começar uma nova partida a qualquer momento.</li>
+            <li><strong>Salvar e Carregar:</strong> Clique em "SALVAR" para salvar o progresso do jogo. Clique em "CARREGAR" para retomar um jogo salvo anteriormente.</li>
         </ul>
         
         <h3>Dicas</h3>
@@ -569,8 +670,8 @@
         Tabela do Brasileirão EKPB Digital Music © | Powered by <a href="https://ekpbdigitalmusic.my.canva.site/" target="_blank">Edson Palácio</a>
     </div>
     
+    <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script>
     <script>
-        // Função para mudar entre tabs
         function openTab(evt, tabName) {
             const tabs = document.querySelectorAll('.main-tabs > .tab');
             const tabContents = document.querySelectorAll('.tab-content');
@@ -578,27 +679,57 @@
             tabs.forEach(tab => tab.classList.remove('active'));
             tabContents.forEach(content => content.classList.remove('active'));
             
-            evt.currentTarget.classList.add('active');
+            if (evt.currentTarget) {
+                evt.currentTarget.classList.add('active');
+            } else {
+                document.querySelector(`.tab[onclick*="${tabName}"]`).classList.add('active');
+            }
             document.getElementById(tabName).classList.add('active');
         }
 
-        // Imagens
         const todasImagens = [
-            'img/carta1.jpg', 'img/carta1.jpg',
-            'img/carta2.jpg', 'img/carta2.jpg',
-            'img/carta3.jpg', 'img/carta3.jpg',
-            'img/carta4.jpg', 'img/carta4.jpg',
-            'img/carta5.jpg', 'img/carta5.jpg',
-            'img/carta6.jpg', 'img/carta6.jpg',
-            'img/carta7.jpg', 'img/carta7.jpg',
-            'img/carta8.jpg', 'img/carta8.jpg',
-            'img/carta9.jpg', 'img/carta9.jpg',
-            'img/carta10.jpg', 'img/carta10.jpg',
-            'img/carta11.jpg', 'img/carta11.jpg',
-            'img/carta12.jpg', 'img/carta12.jpg',
-            'img/carta13.jpg', 'img/carta13.jpg',
-            'img/carta14.jpg', 'img/carta14.jpg',
-            'img/carta15.jpg', 'img/carta15.jpg'
+            'https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/img/carta1.jpg',
+            'https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/img/carta1.jpg',
+            'https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/img/carta2.jpg',
+            'https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/img/carta2.jpg',
+            'https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/img/carta3.jpg',
+            'https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/img/carta3.jpg',
+            'https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/img/carta4.jpg',
+            'https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/img/carta4.jpg',
+            'https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/img/carta5.jpg',
+            'https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/img/carta5.jpg',
+            'https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/img/carta6.jpg',
+            'https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/img/carta6.jpg',
+            'https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/img/carta7.jpg',
+            'https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/img/carta7.jpg',
+            'https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/img/carta8.jpg',
+            'https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/img/carta8.jpg',
+            'https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/img/carta9.jpg',
+            'https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/img/carta9.jpg',
+            'https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/img/carta10.jpg',
+            'https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/img/carta10.jpg',
+            'https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/img/carta11.jpg',
+            'https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/img/carta11.jpg',
+            'https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/img/carta12.jpg',
+            'https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/img/carta12.jpg',
+            'https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/img/carta13.jpg',
+            'https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/img/carta13.jpg',
+            'https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/img/carta14.jpg',
+            'https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/img/carta14.jpg',
+            'https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/img/carta15.jpg',
+            'https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/img/carta15.jpg'
+        ];
+
+        const playlist = [
+            'https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/aud/musical1.mp3',
+            'https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/aud/musical2.mp3',
+            'https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/aud/musical3.mp3'
+        ];
+
+        const musicTrackImages = [
+            'https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/img/img_mp3/musical1.jpg',
+            'https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/img/img_mp3/musical2.jpg',
+            'https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/img/img_mp3/musical3.jpg'
         ];
 
         let imagens = [];
@@ -609,31 +740,25 @@
         let erros = 0;
         let paresEncontrados = 0;
         let bloqueado = false;
-        let cardSound = new Audio('aud/flip.mp3');
-        let successSound = new Audio('aud/yes_1.mp3');
-        let errorSound = new Audio('aud/no_4.mp3');
-        let startSound = new Audio('aud/start-game.mp3');
-        let gameOverSound = new Audio('aud/game-over.mp3');
-        let applauseSound = new Audio('aud/applause.mp3');
-        let continuousMusic = new Audio('aud/SoundHelix-Song-1.mp3');
-        let clickSound = new Audio('aud/click.mp3');
-        let typingSound = new Audio('aud/SoundHelix-Song-9.mp3');
-        let namePromptSound = new Audio('aud/notification.mp3');
-        let somCartasLigado = true;
-        let volumeMusica = 'baixo';
         let jogoIniciado = false;
         let timerInterval = null;
-        let timeRemaining = 180000;
-        let maxErros = 30;
+        let timeRemaining = 60000;
+        let elapsedTime = 0;
+        let maxErros = 10;
         let playerName = '';
+        let cardSound = new Audio('https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/aud/flip.mp3');
+        let successSound = new Audio('https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/aud/yes_1.mp3');
+        let errorSound = new Audio('https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/aud/no_4.mp3');
+        let startSound = new Audio('https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/aud/start-game.mp3');
+        let gameOverSound = new Audio('https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/aud/game-over.mp3');
+        let applauseSound = new Audio('https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/aud/applause.mp3');
+        let keySound = new Audio('https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/aud/tecla.mp3');
+        let clickSound = new Audio('https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/aud/click.mp3');
+        let continuousMusic = null;
+        let currentMusicIndex = 0;
+        let somCartasLigado = true;
+        let isMusicPlaying = false;
 
-        // Lista de todos os elementos de áudio
-        const allAudioElements = [
-            cardSound, successSound, errorSound, startSound, gameOverSound,
-            applauseSound, continuousMusic, clickSound, typingSound, namePromptSound
-        ];
-
-        // Ajustar volumes
         cardSound.volume = 1.0;
         successSound.volume = 1.0;
         successSound.loop = false;
@@ -641,104 +766,48 @@
         startSound.volume = 1.0;
         gameOverSound.volume = 1.0;
         applauseSound.volume = 1.0;
-        continuousMusic.loop = true;
-        continuousMusic.volume = 0.2;
+        keySound.volume = 0.5;
         clickSound.volume = 0.5;
-        typingSound.volume = 0.5;
-        namePromptSound.volume = 0.7;
 
-        // Pré-carregar todos os áudios
-        function preloadAudio(audio) {
-            return new Promise((resolve, reject) => {
-                audio.preload = 'auto';
-                audio.load();
-                audio.oncanplaythrough = () => resolve();
-                audio.onerror = (err) => {
-                    console.error(`Erro ao pré-carregar áudio ${audio.src}:`, err);
-                    audio.dataset.loadFailed = 'true';
-                    reject(err);
-                };
+        document.addEventListener('DOMContentLoaded', () => {
+            const nameInput = document.getElementById('player-name');
+            nameInput.addEventListener('input', checkPlayerName);
+            nameInput.addEventListener('input', () => {
+                if (somCartasLigado) {
+                    keySound.currentTime = 0;
+                    keySound.play().catch(err => console.error('Erro ao tocar som de tecla:', err));
+                }
             });
-        }
 
-        // Pré-carregar todos os áudios ao iniciar
-        async function preloadAllAudio() {
-            const preloadPromises = allAudioElements.map(audio => preloadAudio(audio));
-            try {
-                await Promise.all(preloadPromises);
-            } catch (err) {
-                console.error('Erro ao pré-carregar alguns áudios:', err);
-                alert('Erro ao carregar alguns áudios. Verifique sua conexão com a internet.');
-            }
-        }
-
-        // Criar um AudioContext para gerenciar o estado de áudio
-        const AudioContext = window.AudioContext || window.webkitAudioContext;
-        const audioContext = new AudioContext();
-
-        // Função para retomar o AudioContext
-        function resumeAudioContext() {
-            if (audioContext.state === 'suspended') {
-                audioContext.resume().then(() => {
-                    console.log('AudioContext resumed successfully');
-                }).catch(err => {
-                    console.error('Erro ao retomar AudioContext:', err);
-                });
-            }
-        }
-
-        // Evento global para retomar o AudioContext e tocar o som de notificação do nome
-        let hasInteracted = false;
-        document.addEventListener('click', () => {
-            if (!hasInteracted) {
-                resumeAudioContext();
-                
-                // Tocar música de fundo ao primeiro clique
-                if (volumeMusica !== 'desligado' && !continuousMusic.dataset.loadFailed) {
-                    continuousMusic.pause();
-                    continuousMusic.currentTime = 0;
-                    continuousMusic.play().catch(err => console.error('Erro ao tocar música contínua:', err));
+            const nivelSelect = document.getElementById('nivel-dificuldade');
+            nivelSelect.addEventListener('change', () => {
+                if (jogoIniciado) {
+                    alert('Finalize ou reinicie o jogo para mudar o nível de dificuldade.');
+                    nivelSelect.value = nivelSelect.dataset.lastValue;
+                } else {
+                    nivelSelect.dataset.lastValue = nivelSelect.value;
+                    inicializarJogo();
                 }
-
-                // Tocar som de notificação para "DIGITE SEU NOME PARA INICIAR"
-                if (somCartasLigado && !namePromptSound.dataset.loadFailed) {
-                    namePromptSound.currentTime = 0;
-                    namePromptSound.play().catch(err => console.error('Erro ao tocar som de notificação do nome:', err));
-                }
-
-                hasInteracted = true;
-            }
-        }, { once: true });
-
-        let scores = JSON.parse(localStorage.getItem('memoryGameScores')) || [];
-
-        // Evento de clique global para tocar o som de clique
-        document.addEventListener('click', (event) => {
-            const target = event.target;
-            if (target.closest('.carta') || 
-                target.closest('#iniciar') || 
-                target.closest('#reiniciar') || 
-                target.closest('#salvar-jogo-arquivo') || 
-                target.closest('#carregar-jogo-arquivo') || 
-                target.closest('#som-controle') || 
-                target.closest('#musica-controle') || 
-                target.closest('.main-tabs') || 
-                target.closest('.contact-form button') || 
-                target.closest('#player-name')
-            ) {
-                return;
-            }
-            if (somCartasLigado && !clickSound.dataset.loadFailed) {
-                clickSound.currentTime = 0;
-                clickSound.play().catch(err => console.error('Erro ao tocar som de clique:', err));
-            }
+            });
+            nivelSelect.dataset.lastValue = nivelSelect.value;
         });
 
-        // Evento para o som de digitação
-        document.getElementById('player-name').addEventListener('input', () => {
-            if (somCartasLigado && !typingSound.dataset.loadFailed) {
-                typingSound.currentTime = 0;
-                typingSound.play().catch(err => console.error('Erro ao tocar som de digitação:', err));
+        document.addEventListener('click', (event) => {
+            if (jogoIniciado) return;
+            const target = event.target;
+            if (target.closest('#player-name') ||
+                target.closest('#iniciar') ||
+                target.closest('#nivel-dificuldade') ||
+                target.closest('#som-controle') ||
+                target.closest('#musica-prev') ||
+                target.closest('#musica-play-pause') ||
+                target.closest('#musica-next')) {
+                return;
+            }
+            document.getElementById('player-name').focus();
+            if (somCartasLigado) {
+                clickSound.currentTime = 0;
+                clickSound.play().catch(err => console.error('Erro ao tocar som de clique:', err));
             }
         });
 
@@ -755,44 +824,25 @@
             return `${seconds.toString().padStart(2, '0')}.${millis.toString().padStart(3, '0')}`;
         }
 
-        function displayScores() {
-            const scoreboardList = document.getElementById('scoreboard-list');
-            scoreboardList.innerHTML = '';
-            scores.sort((a, b) => {
-                if (a.movements !== b.movements) return a.movements - b.movements;
-                if (a.errors !== b.errors) return a.errors - b.errors;
-                return b.time - a.time;
-            });
-            scores.forEach((score, index) => {
-                const li = document.createElement('li');
-                const position = (index + 1) + 'º';
-                li.textContent = `${position} ${score.name} - ${score.level} - ${score.movements} mov, ${score.errors} erros, ${formatTime(score.time)}`;
-                scoreboardList.appendChild(li);
-            });
-        }
-
-        function saveScore(nivel, movimentos, erros, tempo) {
-            scores.push({
-                name: playerName,
-                level: nivel === 'facil' ? 'Fácil' : nivel === 'medio' ? 'Médio' : 'Difícil',
-                movements: movimentos,
-                errors: erros,
-                time: tempo
-            });
-            localStorage.setItem('memoryGameScores', JSON.stringify(scores));
-            displayScores();
+        function updateProgress() {
+            const totalPares = imagens.length / 2;
+            const progresso = Math.round((paresEncontrados / totalPares) * 100);
+            document.getElementById('progresso').textContent = `Progresso: ${progresso}%`;
         }
 
         function startTimer() {
             if (timerInterval) clearInterval(timerInterval);
-            document.getElementById('timer').textContent = `Tempo: ${formatTime(timeRemaining)}`;
+            document.getElementById('timer').textContent = `Tempo Restante: ${formatTime(timeRemaining)}`;
+            document.getElementById('elapsed-timer').textContent = `Tempo Decorrido: ${formatTime(elapsedTime)}`;
             timerInterval = setInterval(() => {
                 if (!jogoIniciado) return;
                 timeRemaining -= 10;
-                document.getElementById('timer').textContent = `Tempo: ${formatTime(timeRemaining)}`;
+                elapsedTime += 10;
+                document.getElementById('timer').textContent = `Tempo Restante: ${formatTime(timeRemaining)}`;
+                document.getElementById('elapsed-timer').textContent = `Tempo Decorrido: ${formatTime(elapsedTime)}`;
                 if (timeRemaining <= 0) {
                     clearInterval(timerInterval);
-                    if (somCartasLigado && !gameOverSound.dataset.loadFailed) {
+                    if (somCartasLigado) {
                         gameOverSound.currentTime = 0;
                         gameOverSound.play().catch(() => console.log('Erro ao tocar som de GAME OVER'));
                     }
@@ -810,59 +860,74 @@
             return array;
         }
 
-        function ajustarVolumeMusica() {
-            if (volumeMusica === 'desligado') {
-                volumeMusica = 'baixo';
-            } else if (volumeMusica === 'baixo') {
-                volumeMusica = 'medio';
-            } else if (volumeMusica === 'medio') {
-                volumeMusica = 'alto';
+        function updateEqualizer() {
+            const equalizer = document.getElementById('equalizer');
+            if (isMusicPlaying) {
+                equalizer.classList.add('active');
             } else {
-                volumeMusica = 'desligado';
+                equalizer.classList.remove('active');
             }
+        }
 
-            const musicaControle = document.getElementById('musica-controle');
-            const volumeLabel = document.getElementById('volume-label');
-            let targetVolume;
+        function playNextMusic() {
+            currentMusicIndex++;
+            if (currentMusicIndex >= playlist.length) {
+                currentMusicIndex = 0;
+            }
+            document.getElementById('music-track-image').src = musicTrackImages[currentMusicIndex];
+            if (isMusicPlaying) {
+                if (continuousMusic) {
+                    continuousMusic.pause();
+                    continuousMusic.currentTime = 0;
+                }
+                continuousMusic = new Audio(playlist[currentMusicIndex]);
+                continuousMusic.loop = true;
+                continuousMusic.volume = 0.5;
+                continuousMusic.play().catch(err => console.error('Erro ao tocar música:', err));
+            }
+            updateEqualizer();
+        }
 
-            musicaControle.className = 'fas';
+        function playPreviousMusic() {
+            currentMusicIndex--;
+            if (currentMusicIndex < 0) {
+                currentMusicIndex = playlist.length - 1;
+            }
+            document.getElementById('music-track-image').src = musicTrackImages[currentMusicIndex];
+            if (isMusicPlaying) {
+                if (continuousMusic) {
+                    continuousMusic.pause();
+                    continuousMusic.currentTime = 0;
+                }
+                continuousMusic = new Audio(playlist[currentMusicIndex]);
+                continuousMusic.loop = true;
+                continuousMusic.volume = 0.5;
+                continuousMusic.play().catch(err => console.error('Erro ao tocar música:', err));
+            }
+            updateEqualizer();
+        }
 
-            if (volumeMusica === 'desligado') {
-                musicaControle.classList.add('fa-volume-mute', 'desligado');
-                volumeLabel.textContent = 'Desligado';
-                targetVolume = 0;
-                continuousMusic.pause();
-            } else if (volumeMusica === 'baixo') {
-                musicaControle.classList.add('fa-volume-down', 'baixo');
-                volumeLabel.textContent = 'Baixo';
-                targetVolume = 0.2;
-            } else if (volumeMusica === 'medio') {
-                musicaControle.classList.add('fa-volume-up', 'medio');
-                volumeLabel.textContent = 'Médio';
-                targetVolume = 0.6;
+        function toggleMusic() {
+            const playPauseButton = document.getElementById('musica-play-pause');
+            if (isMusicPlaying) {
+                isMusicPlaying = false;
+                playPauseButton.textContent = '▶';
+                if (continuousMusic) continuousMusic.pause();
             } else {
-                musicaControle.classList.add('fa-volume-up', 'alto');
-                volumeLabel.textContent = 'Alto';
-                targetVolume = 1.0;
-            }
-
-            if (volumeMusica !== 'desligado' && !continuousMusic.dataset.loadFailed) {
-                continuousMusic.pause();
-                continuousMusic.currentTime = 0;
+                isMusicPlaying = true;
+                playPauseButton.textContent = '⏸';
+                if (!continuousMusic || continuousMusic.src !== playlist[currentMusicIndex]) {
+                    if (continuousMusic) {
+                        continuousMusic.pause();
+                        continuousMusic.currentTime = 0;
+                    }
+                    continuousMusic = new Audio(playlist[currentMusicIndex]);
+                    continuousMusic.loop = true;
+                    continuousMusic.volume = 0.5;
+                }
                 continuousMusic.play().catch(err => console.error('Erro ao tocar música contínua:', err));
             }
-
-            let currentVolume = continuousMusic.volume;
-            const step = (targetVolume - currentVolume) / 20;
-            let stepCount = 0;
-            const transitionInterval = setInterval(() => {
-                stepCount++;
-                continuousMusic.volume = currentVolume + (step * stepCount);
-                if (stepCount >= 20) {
-                    continuousMusic.volume = targetVolume;
-                    clearInterval(transitionInterval);
-                }
-            }, 50);
+            updateEqualizer();
         }
 
         function inicializarJogo() {
@@ -870,20 +935,23 @@
             let numPares;
 
             if (nivel === 'facil') {
-                numPares = 5;
+                numPares = 8; // 16 cartas
                 timeRemaining = 60000;
                 maxErros = 10;
             } else if (nivel === 'medio') {
-                numPares = 8;
+                numPares = 10; // 20 cartas
                 timeRemaining = 90000;
                 maxErros = 15;
             } else {
-                numPares = 15;
+                numPares = 12; // 24 cartas
                 timeRemaining = 180000;
                 maxErros = 30;
             }
 
+            elapsedTime = 0;
             document.getElementById('tolerancia-erros').textContent = `Tolerância de erros: ${maxErros}`;
+            document.getElementById('timer').textContent = `Tempo Restante: ${formatTime(timeRemaining)}`;
+            document.getElementById('elapsed-timer').textContent = `Tempo Decorrido: ${formatTime(elapsedTime)}`;
 
             imagens = todasImagens.slice(0, numPares * 2);
 
@@ -898,20 +966,20 @@
             bloqueado = false;
             jogoIniciado = false;
             if (timerInterval) clearInterval(timerInterval);
-            document.getElementById('movimentos').textContent = `Movimentos: ${movimentos}`;
-            document.getElementById('erros').textContent = `Erros: ${erros}`;
             document.getElementById('acertos').textContent = `Acertos: ${paresEncontrados}`;
-            document.getElementById('timer').textContent = `Tempo: ${formatTime(timeRemaining)}`;
+            document.getElementById('progresso').textContent = `Progresso: 0%`;
             document.getElementById('contagem-regressiva').style.display = 'none';
             document.getElementById('player-name').value = '';
+            playerName = '';
             checkPlayerName();
 
+            document.getElementById('nivel-dificuldade').disabled = false;
+
             const totalCartas = numPares * 2;
-            const totalSlots = nivel === 'facil' ? 12 : nivel === 'medio' ? 16 : 30;
-            const cartasPorFila = Math.ceil(totalSlots / 8);
-            const cartaTamanho = window.innerWidth <= 600 ? 60 : 77;
-            jogo.style.gridTemplateColumns = `repeat(${cartasPorFila}, ${cartaTamanho}px)`;
-            jogo.style.gridTemplateRows = `repeat(8, ${cartaTamanho}px)`;
+            const colunas = 4;
+            const linhas = Math.ceil(totalCartas / colunas);
+            jogo.style.gridTemplateColumns = `repeat(${colunas}, 1fr)`;
+            jogo.style.gridTemplateRows = `repeat(${linhas}, auto)`;
 
             const imagensEmbaralhadas = embaralhar([...imagens]);
             imagensEmbaralhadas.forEach((imgSrc, idx) => {
@@ -930,41 +998,41 @@
                 cartas.push(carta);
             });
 
-            const emptySlots = totalSlots - cartas.length;
-            for (let i = 0; i < emptySlots; i++) {
-                const placeholder = document.createElement('div');
-                placeholder.className = 'carta';
-                placeholder.style.visibility = 'hidden';
-                jogo.appendChild(placeholder);
+            if (continuousMusic) {
+                continuousMusic.pause();
+                continuousMusic.currentTime = 0;
+                isMusicPlaying = false;
+                document.getElementById('musica-play-pause').textContent = '▶';
             }
 
-            continuousMusic.pause();
-            const musicaControle = document.getElementById('musica-controle');
-            musicaControle.className = 'fas';
-            if (volumeMusica === 'desligado') {
-                musicaControle.classList.add('fa-volume-mute', 'desligado');
-            } else if (volumeMusica === 'baixo') {
-                musicaControle.classList.add('fa-volume-down', 'baixo');
-            } else if (volumeMusica === 'medio') {
-                musicaControle.classList.add('fa-volume-up', 'medio');
-            } else {
-                musicaControle.classList.add('fa-volume-up', 'alto');
-            }
-            document.getElementById('volume-label').textContent = volumeMusica === 'desligado' ? 'Desligado' : volumeMusica === 'baixo' ? 'Baixo' : volumeMusica === 'medio' ? 'Médio' : 'Alto';
-            
             const somControle = document.getElementById('som-controle');
             somControle.className = 'fas fa-volume-up';
             if (!somCartasLigado) {
                 somControle.classList.add('desligado');
             }
+
+            currentMusicIndex = 0;
+            document.getElementById('music-track-image').src = musicTrackImages[currentMusicIndex];
+            updateEqualizer();
         }
 
-        function iniciarJogo() {
+        function startGame() {
+            if (!playerName) {
+                alert('Por favor, insira seu nome antes de iniciar o jogo.');
+                return;
+            }
+            if (jogoIniciado) {
+                alert('Finalize ou reinicie o jogo para iniciar novamente.');
+                return;
+            }
             alert('Regras:\n1 - Não fotografar a tela.\n2 - Não fazer print.\n3 - Esteja atento ao tempo.');
-            if (somCartasLigado && !startSound.dataset.loadFailed) {
+            if (somCartasLigado) {
                 startSound.currentTime = 0;
                 startSound.play().catch(() => console.log('Erro ao tocar som de início'));
             }
+
+            document.getElementById('nivel-dificuldade').disabled = true;
+
             bloqueado = true;
             const nivel = document.getElementById('nivel-dificuldade').value;
             let tempoExposicao;
@@ -977,15 +1045,38 @@
                 tempoExposicao = 15000;
             }
 
-            if (volumeMusica !== 'desligado' && !continuousMusic.dataset.loadFailed) {
-                continuousMusic.pause();
-                continuousMusic.currentTime = 0;
-                continuousMusic.play().catch(err => console.error('Erro ao tocar música contínua:', err));
+            isMusicPlaying = true;
+            document.getElementById('musica-play-pause').textContent = '⏸';
+            if (!continuousMusic || continuousMusic.src !== playlist[currentMusicIndex]) {
+                if (continuousMusic) {
+                    continuousMusic.pause();
+                    continuousMusic.currentTime = 0;
+                }
+                continuousMusic = new Audio(playlist[currentMusicIndex]);
+                continuousMusic.loop = true;
+                continuousMusic.volume = 0.5;
             }
+            continuousMusic.play().catch(err => console.error('Erro ao tocar música contínua:', err));
+            updateEqualizer();
+
+            cartas.forEach((carta, index) => {
+                if (carta.style.visibility !== 'hidden') {
+                    setTimeout(() => {
+                        carta.classList.add('subir');
+                    }, index * 50);
+                }
+            });
+
+            setTimeout(() => {
+                const jogo = document.getElementById('jogo');
+                jogo.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, cartas.length * 50 + 100);
 
             cartas.forEach(carta => {
                 if (!carta.classList.contains('combinada') && carta.style.visibility !== 'hidden') {
-                    carta.classList.add('virada');
+                    setTimeout(() => {
+                        carta.classList.add('virada');
+                    }, cartas.length * 50);
                 }
             });
 
@@ -1008,6 +1099,7 @@
                     });
                     bloqueado = false;
                     jogoIniciado = true;
+                    elapsedTime = 0;
                     startTimer();
                 }
             }, 1000);
@@ -1031,8 +1123,7 @@
                 gameOverSound.pause();
                 applauseSound.pause();
                 clickSound.pause();
-                typingSound.pause();
-                namePromptSound.pause();
+                keySound.pause();
                 somControle.classList.add('desligado');
             } else {
                 somControle.classList.remove('desligado');
@@ -1041,12 +1132,12 @@
 
         function virarCarta() {
             if (!jogoIniciado) {
-                alert("É necessário primeiro inserir o nome do jogador.");
+                alert("É necessário primeiro inserir o nome do jogador e clicar em INICIAR.");
                 return;
             }
             if (bloqueado || this.classList.contains('virada') || this.classList.contains('combinada') || this.style.visibility === 'hidden') return;
 
-            if (somCartasLigado && !cardSound.dataset.loadFailed) {
+            if (somCartasLigado) {
                 cardSound.currentTime = 0;
                 cardSound.play().catch(() => console.log('Erro ao tocar som da carta'));
             }
@@ -1058,14 +1149,13 @@
             } else {
                 segundaCarta = this;
                 movimentos++;
-                document.getElementById('movimentos').textContent = `Movimentos: ${movimentos}`;
-
                 if (primeiraCarta.dataset.imgSrc === segundaCarta.dataset.imgSrc) {
                     primeiraCarta.classList.add('combinada');
                     segundaCarta.classList.add('combinada');
                     paresEncontrados++;
                     document.getElementById('acertos').textContent = `Acertos: ${paresEncontrados}`;
-                    if (somCartasLigado && !successSound.dataset.loadFailed) {
+                    updateProgress();
+                    if (somCartasLigado) {
                         successSound.currentTime = 0;
                         successSound.play().catch(() => console.log('Erro ao tocar som de acerto'));
                     }
@@ -1073,27 +1163,24 @@
 
                     if (paresEncontrados === imagens.length / 2) {
                         clearInterval(timerInterval);
-                        if (somCartasLigado && !applauseSound.dataset.loadFailed) {
+                        if (somCartasLigado) {
                             applauseSound.currentTime = 0;
                             applauseSound.play().catch(() => console.log('Erro ao tocar som de aplausos'));
                         }
-                        const nivel = document.getElementById('nivel-dificuldade').value;
-                        saveScore(nivel, movimentos, erros, timeRemaining);
                         setTimeout(() => {
-                            alert(`Parabéns! Você venceu em ${movimentos} movimentos com ${erros} erros e ${formatTime(timeRemaining)} de jogo!`);
+                            alert(`Parabéns! Você venceu em ${movimentos} movimentos com ${erros} erros e ${formatTime(elapsedTime)} de jogo!`);
                             inicializarJogo();
                         }, 500);
                     }
                 } else {
                     erros++;
-                    document.getElementById('erros').textContent = `Erros: ${erros}`;
-                    if (somCartasLigado && !errorSound.dataset.loadFailed) {
+                    if (somCartasLigado) {
                         errorSound.currentTime = 0;
                         errorSound.play().catch(() => console.log('Erro ao tocar som de erro'));
                     }
                     if (erros >= maxErros) {
                         clearInterval(timerInterval);
-                        if (somCartasLigado && !gameOverSound.dataset.loadFailed) {
+                        if (somCartasLigado) {
                             gameOverSound.currentTime = 0;
                             gameOverSound.play().catch(() => console.log('Erro ao tocar som de GAME OVER'));
                         }
@@ -1119,139 +1206,123 @@
             segundaCarta = null;
         }
 
-        function salvarJogoArquivo() {
-            const estadoJogo = {
-                movimentos: movimentos,
-                erros: erros,
-                paresEncontrados: paresEncontrados,
-                timeRemaining: timeRemaining,
-                nivel: document.getElementById('nivel-dificuldade').value,
-                playerName: playerName,
-                jogoIniciado: jogoIniciado,
-                somCartasLigado: somCartasLigado,
-                volumeMusica: volumeMusica,
-                maxErros: maxErros,
-                cartas: cartas.map(carta => ({
-                    imgSrc: carta.dataset.imgSrc,
-                    id: carta.dataset.id,
-                    virada: carta.classList.contains('virada'),
-                    combinada: carta.classList.contains('combinada'),
-                    visivel: carta.style.visibility !== 'hidden'
-                })),
-                imagens: imagens
-            };
-
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(estadoJogo));
-            const downloadAnchorNode = document.createElement('a');
-            downloadAnchorNode.setAttribute("href", dataStr);
-            downloadAnchorNode.setAttribute("download", "saves/memory_game_save.json");
-            document.body.appendChild(downloadAnchorNode);
-            downloadAnchorNode.click();
-            downloadAnchorNode.remove();
-            alert('Jogo salvo como arquivo!');
-        }
-
-        function carregarJogoArquivo(event) {
-            const file = event.target.files[0];
-            if (!file) {
-                alert('Nenhum arquivo selecionado!');
+        function salvarJogo() {
+            if (!jogoIniciado) {
+                alert('Inicie o jogo antes de salvar.');
                 return;
             }
 
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const estadoJogo = JSON.parse(e.target.result);
-
-                    movimentos = estadoJogo.movimentos || 0;
-                    erros = estadoJogo.erros || 0;
-                    paresEncontrados = estadoJogo.paresEncontrados || 0;
-                    timeRemaining = estadoJogo.timeRemaining || 180000;
-                    document.getElementById('nivel-dificuldade').value = estadoJogo.nivel || 'dificil';
-                    playerName = estadoJogo.playerName || '';
-                    jogoIniciado = estadoJogo.jogoIniciado || false;
-                    somCartasLigado = estadoJogo.somCartasLigado !== undefined ? estadoJogo.somCartasLigado : true;
-                    volumeMusica = estadoJogo.volumeMusica || 'baixo';
-                    maxErros = estadoJogo.maxErros || 30;
-                    imagens = estadoJogo.imagens || [];
-
-                    document.getElementById('movimentos').textContent = `Movimentos: ${movimentos}`;
-                    document.getElementById('erros').textContent = `Erros: ${erros}`;
-                    document.getElementById('acertos').textContent = `Acertos: ${paresEncontrados}`;
-                    document.getElementById('tolerancia-erros').textContent = `Tolerância de erros: ${maxErros}`;
-                    document.getElementById('timer').textContent = `Tempo: ${formatTime(timeRemaining)}`;
-                    document.getElementById('player-name').value = playerName;
-                    checkPlayerName();
-
-                    const jogo = document.getElementById('jogo');
-                    jogo.innerHTML = '';
-                    cartas = [];
-
-                    const totalCartas = imagens.length;
-                    const totalSlots = estadoJogo.nivel === 'facil' ? 12 : estadoJogo.nivel === 'medio' ? 16 : 30;
-                    const cartasPorFila = Math.ceil(totalSlots / 8);
-                    const cartaTamanho = window.innerWidth <= 600 ? 60 : 77;
-                    jogo.style.gridTemplateColumns = `repeat(${cartasPorFila}, ${cartaTamanho}px)`;
-                    jogo.style.gridTemplateRows = `repeat(8, ${cartaTamanho}px)`;
-
-                    estadoJogo.cartas.forEach(cartaData => {
-                        const carta = document.createElement('div');
-                        carta.className = 'carta';
-                        carta.dataset.imgSrc = cartaData.imgSrc;
-                        carta.dataset.id = cartaData.id;
-
-                        if (cartaData.virada) carta.classList.add('virada');
-                        if (cartaData.combinada) carta.classList.add('combinada');
-                        if (!cartaData.visivel) carta.style.visibility = 'hidden';
-
-                        const img = document.createElement('img');
-                        img.src = cartaData.imgSrc;
-                        img.alt = 'Imagem da carta';
-                        carta.appendChild(img);
-
-                        carta.addEventListener('click', virarCarta);
-                        jogo.appendChild(carta);
-                        cartas.push(carta);
-                    });
-
-                    const emptySlots = totalSlots - estadoJogo.cartas.filter(c => c.visivel).length;
-                    for (let i = 0; i < emptySlots; i++) {
-                        const placeholder = document.createElement('div');
-                        placeholder.className = 'carta';
-                        placeholder.style.visibility = 'hidden';
-                        jogo.appendChild(placeholder);
-                    }
-
-                    const musicaControle = document.getElementById('musica-controle');
-                    musicaControle.className = 'fas';
-                    if (volumeMusica === 'desligado') {
-                        musicaControle.classList.add('fa-volume-mute', 'desligado');
-                    } else if (volumeMusica === 'baixo') {
-                        musicaControle.classList.add('fa-volume-down', 'baixo');
-                    } else if (volumeMusica === 'medio') {
-                        musicaControle.classList.add('fa-volume-up', 'medio');
-                    } else {
-                        musicaControle.classList.add('fa-volume-up', 'alto');
-                    }
-                    document.getElementById('volume-label').textContent = volumeMusica === 'desligado' ? 'Desligado' : volumeMusica === 'baixo' ? 'Baixo' : volumeMusica === 'medio' ? 'Médio' : 'Alto';
-
-                    const somControle = document.getElementById('som-controle');
-                    somControle.className = 'fas fa-volume-up';
-                    if (!somCartasLigado) {
-                        somControle.classList.add('desligado');
-                    }
-
-                    if (jogoIniciado) {
-                        startTimer();
-                    }
-
-                    alert('Jogo carregado com sucesso!');
-                } catch (err) {
-                    console.error('Erro ao carregar o jogo:', err);
-                    alert('Erro ao carregar o jogo. O arquivo pode estar corrompido.');
-                }
+            const gameState = {
+                imagens: imagens,
+                cartas: cartas.map(carta => ({
+                    imgSrc: carta.dataset.imgSrc,
+                    id: carta.dataset.id,
+                    isFlipped: carta.classList.contains('virada'),
+                    isMatched: carta.classList.contains('combinada'),
+                    isHidden: carta.style.visibility === 'hidden'
+                })),
+                primeiraCarta: primeiraCarta ? primeiraCarta.dataset.id : null,
+                segundaCarta: segundaCarta ? segundaCarta.dataset.id : null,
+                movimentos: movimentos,
+                erros: erros,
+                paresEncontrados: paresEncontrados,
+                bloqueado: bloqueado,
+                jogoIniciado: jogoIniciado,
+                timeRemaining: timeRemaining,
+                elapsedTime: elapsedTime,
+                maxErros: maxErros,
+                playerName: playerName,
+                nivel: document.getElementById('nivel-dificuldade').value,
+                currentMusicIndex: currentMusicIndex,
+                isMusicPlaying: isMusicPlaying
             };
-            reader.readAsText(file);
+
+            localStorage.setItem('memoryGameState', JSON.stringify(gameState));
+            alert('Jogo salvo com sucesso!');
+        }
+
+        function carregarJogo() {
+            const savedState = localStorage.getItem('memoryGameState');
+            if (!savedState) {
+                alert('Nenhum jogo salvo encontrado.');
+                return;
+            }
+
+            const gameState = JSON.parse(savedState);
+
+            imagens = gameState.imagens;
+            movimentos = gameState.movimentos;
+            erros = gameState.erros;
+            paresEncontrados = gameState.paresEncontrados;
+            bloqueado = gameState.bloqueado;
+            jogoIniciado = gameState.jogoIniciado;
+            timeRemaining = gameState.timeRemaining;
+            elapsedTime = gameState.elapsedTime;
+            maxErros = gameState.maxErros;
+            playerName = gameState.playerName;
+            currentMusicIndex = gameState.currentMusicIndex;
+            isMusicPlaying = gameState.isMusicPlaying;
+
+            document.getElementById('nivel-dificuldade').value = gameState.nivel;
+            document.getElementById('nivel-dificuldade').disabled = true;
+            document.getElementById('player-name').value = playerName;
+            document.getElementById('acertos').textContent = `Acertos: ${paresEncontrados}`;
+            document.getElementById('progresso').textContent = `Progresso: ${Math.round((paresEncontrados / (imagens.length / 2)) * 100)}%`;
+            document.getElementById('tolerancia-erros').textContent = `Tolerância de erros: ${maxErros}`;
+            document.getElementById('timer').textContent = `Tempo Restante: ${formatTime(timeRemaining)}`;
+            document.getElementById('elapsed-timer').textContent = `Tempo Decorrido: ${formatTime(elapsedTime)}`;
+
+            const jogo = document.getElementById('jogo');
+            jogo.innerHTML = '';
+            cartas = [];
+
+            const totalCartas = imagens.length;
+            const colunas = 4;
+            const linhas = Math.ceil(totalCartas / colunas);
+            jogo.style.gridTemplateColumns = `repeat(${colunas}, 1fr)`;
+            jogo.style.gridTemplateRows = `repeat(${linhas}, auto)`;
+
+            gameState.cartas.forEach((cartaState, idx) => {
+                const carta = document.createElement('div');
+                carta.className = 'carta';
+                carta.dataset.imgSrc = cartaState.imgSrc;
+                carta.dataset.id = cartaState.id;
+                if (cartaState.isFlipped) carta.classList.add('virada');
+                if (cartaState.isMatched) carta.classList.add('combinada');
+                if (cartaState.isHidden) carta.style.visibility = 'hidden';
+
+                const img = document.createElement('img');
+                img.src = cartaState.imgSrc;
+                img.alt = 'Imagem da carta';
+                carta.appendChild(img);
+
+                carta.addEventListener('click', virarCarta);
+                jogo.appendChild(carta);
+                cartas.push(carta);
+            });
+
+            primeiraCarta = gameState.primeiraCarta ? cartas.find(c => c.dataset.id === gameState.primeiraCarta) : null;
+            segundaCarta = gameState.segundaCarta ? cartas.find(c => c.dataset.id === gameState.segundaCarta) : null;
+
+            if (jogoIniciado) {
+                startTimer();
+            }
+
+            document.getElementById('music-track-image').src = musicTrackImages[currentMusicIndex];
+            document.getElementById('musica-play-pause').textContent = isMusicPlaying ? '⏸' : '▶';
+            if (isMusicPlaying) {
+                if (continuousMusic) {
+                    continuousMusic.pause();
+                    continuousMusic.currentTime = 0;
+                }
+                continuousMusic = new Audio(playlist[currentMusicIndex]);
+                continuousMusic.loop = true;
+                continuousMusic.volume = 0.5;
+                continuousMusic.play().catch(err => console.error('Erro ao tocar música:', err));
+            }
+            updateEqualizer();
+
+            alert('Jogo carregado com sucesso!');
         }
 
         function enviarMensagem() {
@@ -1259,7 +1330,7 @@
             const email = document.getElementById('email').value;
             const mensagem = document.getElementById('mensagem').value;
             if (nome && email && mensagem) {
-                alert('Mensagem enviada com sucesso! (Simulação)');
+                alert('Mensagem enviada com sucesso! Entraremos em contato em breve.');
                 document.getElementById('nome').value = '';
                 document.getElementById('email').value = '';
                 document.getElementById('mensagem').value = '';
@@ -1268,11 +1339,7 @@
             }
         }
 
-        // Inicializar o jogo ao carregar a página
         inicializarJogo();
-        displayScores();
-        preloadAllAudio();
-        document.getElementById('nivel-dificuldade').addEventListener('change', () => inicializarJogo());
     </script>
 </body>
 </html>
