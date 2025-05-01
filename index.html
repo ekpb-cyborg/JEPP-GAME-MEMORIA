@@ -305,6 +305,9 @@
             width: 100%;
             max-width: 180px;
         }
+        #backup-file-input {
+            display: none;
+        }
         #imagem-principal {
             display: block;
             width: 100%;
@@ -500,8 +503,8 @@
         <div id="dificuldade">
             <label for="nivel-dificuldade">NÍVEL DE DIFICULDADE:</label>
             <select id="nivel-dificuldade">
-                <option value="facil">Fácil (10 pares, 3s)</option>
-                <option value="medio">Médio (13 pares, 5s)</option>
+                <option value="facil">Fácil (6 pares, 3s)</option>
+                <option value="medio">Médio (10 pares, 5s)</option>
                 <option value="dificil">Difícil (16 pares, 10s)</option>
             </select>
         </div>
@@ -516,8 +519,9 @@
             </div>
             <div class="button-group">
                 <button id="salvar" onclick="salvarJogo()">SALVAR</button>
-                <button id="carregar" onclick="carregarJogo()">CARREGAR</button>
+                <button id="carregar" onclick="triggerFileInput()">CARREGAR</button>
             </div>
+            <input type="file" id="backup-file-input" accept=".json" style="display: none;" onchange="loadFromFile(event)">
             <div id="audio-controls">
                 <span id="musica-prev" onclick="playPreviousMusic()">⏮</span>
                 <span id="musica-play-pause" onclick="toggleMusic()">▶</span>
@@ -630,12 +634,13 @@
             </li>
             <li><strong>Escolha o Nível de Dificuldade:</strong> Antes de começar, selecione o nível de dificuldade (Fácil, Médio ou Difícil) no menu suspenso. Isso determinará o número de cartas, o tempo de exposição inicial e o tempo limite:
                 <ul>
-                    <li><strong>Fácil:</strong> 10 pares (20 cartas), 3 segundos de exposição inicial, 80 segundos de jogo, 10 erros máximos.</li>
-                    <li><strong>Médio:</strong> 13 pares (26 cartas), 5 segundos de exposição inicial, 100 segundos de jogo, 15 erros máximos.</li>
+                    <li><strong>Fácil:</strong> 6 pares (12 cartas), 3 segundos de exposição inicial, 80 segundos de jogo, 10 erros máximos.</li>
+                    <li><strong>Médio:</strong> 10 pares (20 cartas), 5 segundos de exposição inicial, 100 segundos de jogo, 15 erros máximos.</li>
                     <li><strong>Difícil:</strong> 16 pares (32 cartas), 10 segundos de exposição inicial, 150 segundos de jogo, 20 erros máximos.</li>
                 </ul>
                 Após iniciar o jogo, o nível de dificuldade ficará bloqueado. Para mudar o nível, finalize o jogo (vencendo ou perdendo) ou clique em "REINICIAR".
             </li>
+            <li><strong>Carregamento Automático:</strong> Ao abrir o jogo, você será solicitado a selecionar um arquivo de backup (.json) na pasta Downloads. Escolha o arquivo mais recente (formato: game_memory_save_dt_...). Se não selecionar um arquivo ou o arquivo for inválido, o jogo salvará um novo backup automaticamente.</li>
             <li><strong>Iniciar o Jogo:</strong> Digite seu nome no campo "SEU NOME". Clique em qualquer parte da tela (exceto no menu de dificuldade ou ícones de som) para focar no campo de nome. Em seguida, clique no botão "INICIAR". Você só pode clicar em "INICIAR" uma vez por partida. Para iniciar um novo jogo, finalize o atual (vencendo ou perdendo) ou clique em "REINICIAR". Após clicar em "INICIAR", seu nome será adicionado ao ranking, as cartas irão subir, o tabuleiro será centralizado na tela, e as cartas serão viradas por um curto período (dependendo do nível de dificuldade) para você memorizar. Um som de início será tocado, e uma contagem regressiva será exibida. Após isso, as cartas serão viradas automaticamente para baixo, e o temporizador do jogo começará. Uma música instrumental suave começará a tocar, e um painel de ondas sonoras vibrante será exibido.</li>
             <li><strong>Controle de Áudio:</strong> Use os controles ao lado dos botões para ajustar o áudio:
                 <ul>
@@ -644,7 +649,7 @@
                     <li><i class="fas fa-hand-pointer"></i> Clique em ⏭ para tocar a próxima música na playlist. Se não houver mais músicas, a playlist volta para a primeira faixa (musical1).</li>
                     <li><i class="fas fa-volume-up"></i> Liga/desliga os sons das cartas e ações (como virar carta, erros, acertos, som de início, "GAME OVER", aplausos na vitória e sons de hover). Quando desativado, o ícone fica cinza com um "✕" sobreposto.</li>
                     <li>Um som de clique leve será reproduzido ao clicar em qualquer parte da página, exceto onde outros sons já estão associados (como cartas e botões).</li>
-                    <li>Um som de hover será reproduzido ao passar o mouse sobre botões (INICIAR, REINICIAR, SALVAR, CARREGAR, controles de áudio) e links (abas de navegação, redes sociais, link do ranking, links do EKPB Digital Music, e link do copyright).</li>
+                    <li>Um som de hover será reproduzido ao passar o mouse sobre botões (INICIAR, REINICIAR, SALVAR, CARREGAR, controles de áudio) e links (abas de navegação, redes sociais, link do ranking, links do EKPB Digital Music, e link do copyright), mas apenas após a primeira interação com a página.</li>
                 </ul>
             </li>
             <li><strong>Objetivo:</strong> Encontre todos os pares de imagens iguais dentro do tempo limite e com um número limitado de erros, dependendo do nível:
@@ -668,13 +673,13 @@
             <li><strong>Tempo:</strong> Você tem um tempo limite para completar o jogo (mostrado como "Tempo Restante"), dependendo do nível. Se o tempo acabar, o jogo termina com "GAME OVER" e um som de "GAME OVER" será tocado. O "Tempo Decorrido" mostra quanto tempo você levou jogando.</li>
             <li><strong>Vitória:</strong> Você vence quando todas as cartas forem combinadas. Um som de aplausos será tocado, um alerta será exibido parabenizando você, e sua pontuação será exibida.</li>
             <li><strong>Reiniciar:</strong> Clique no botão "REINICIAR" para começar uma nova partida a qualquer momento.</li>
-            <li><strong>Salvar e Carregar:</strong> Clique em "SALVAR" para salvar o progresso do jogo. Clique em "CARREGAR" para retomar um jogo salvo anteriormente. Use o botão "CARREGAR" para restaurar um backup, com confirmação para evitar sobrescrever o jogo atual.</li>
+            <li><strong>Salvar e Carregar:</strong> Clique em "SALVAR" para salvar o progresso do jogo. Clique em "CARREGAR" para abrir o seletor de arquivos e escolher um backup (.json) na pasta Downloads. Use o botão "CARREGAR" para restaurar um backup, com confirmação para evitar sobrescrever o jogo atual.</li>
         </ul>
         <h3>Dicas</h3>
         <ul>
             <li>Preste atenção às posições das cartas durante o período inicial para lembrar onde estão as imagens.</li>
             <li>Tente virar as cartas em pares para minimizar os movimentos e erros.</li>
-            <li>Passe o mouse sobre botões e links para um feedback sonoro (se o som estiver ligado).</li>
+            <li>Passe o mouse sobre botões e links para um feedback sonoro (se o som estiver ligado e após a primeira interação).</li>
             <li>Se precisar de ajuda ou quiser entrar em contato, vá até a aba "Contato".</li>
         </ul>
     </div>
@@ -742,8 +747,8 @@
                 botao1: 'https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/aud/Botaos/botao1.mp3'
             },
             levels: {
-                facil: { pairs: 10, exposure: 3000, time: 80000, maxErrors: 10 },
-                medio: { pairs: 13, exposure: 5000, time: 100000, maxErrors: 15 },
+                facil: { pairs: 6, exposure: 3000, time: 80000, maxErrors: 10 },
+                medio: { pairs: 10, exposure: 5000, time: 100000, maxErrors: 15 },
                 dificil: { pairs: 16, exposure: 10000, time: 150000, maxErrors: 20 }
             }
         };
@@ -768,7 +773,8 @@
             somCartasLigado: true,
             isMusicPlaying: false,
             continuousMusic: null,
-            ranking: []
+            ranking: [],
+            audioUnlocked: false
         };
 
         // Audio elements
@@ -806,7 +812,8 @@
             playPauseButton: document.getElementById('musica-play-pause'),
             soundWave: document.getElementById('sound-wave'),
             somControle: document.getElementById('som-controle'),
-            rankingList: document.getElementById('ranking-list')
+            rankingList: document.getElementById('ranking-list'),
+            fileInput: document.getElementById('backup-file-input')
         };
 
         // Utility function to generate file name based on current date/time
@@ -831,7 +838,7 @@
         }
 
         // Function to save game state to localStorage and trigger download
-        function saveGameState() {
+        function saveGameState(autoSave = false) {
             const gameState = {
                 ...state,
                 cartas: state.cartas.map(carta => ({
@@ -860,6 +867,10 @@
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
+
+            if (!autoSave) {
+                alert('Jogo salvo com sucesso!');
+            }
         }
 
         // Function to update ranking display
@@ -1017,7 +1028,7 @@
             localStorage.setItem('memoryGameRanking', JSON.stringify(state.ranking));
 
             alert('Regras:\n1 - Não fotografar a tela.\n2 - Não fazer print.\n3 - Esteja atento ao tempo.');
-            if (state.somCartasLigado) playSound(audio.start);
+            if (state.somCartasLigado && state.audioUnlocked) playSound(audio.start);
 
             dom.nivelSelect.disabled = true;
             state.bloqueado = true;
@@ -1084,7 +1095,7 @@
             }
             if (state.bloqueado || this.classList.contains('virada') || this.classList.contains('combinada') || this.style.visibility === 'hidden') return;
 
-            if (state.somCartasLigado) playSound(audio.card);
+            if (state.somCartasLigado && state.audioUnlocked) playSound(audio.card);
             this.classList.add('virada');
 
             if (!state.primeiraCarta) {
@@ -1098,12 +1109,12 @@
                     state.segundaCarta.classList.add('combinada');
                     state.paresEncontrados++;
                     updateUI();
-                    if (state.somCartasLigado) playSound(audio.success);
+                    if (state.somCartasLigado && state.audioUnlocked) playSound(audio.success);
                     resetarSelecao();
 
                     if (state.paresEncontrados === state.imagens.length / 2) {
                         clearInterval(state.timerInterval);
-                        if (state.somCartasLigado) playSound(audio.applause);
+                        if (state.somCartasLigado && state.audioUnlocked) playSound(audio.applause);
                         saveGameState();
                         setTimeout(() => {
                             alert(`Parabéns! Você venceu em ${state.movimentos} movimentos com ${state.erros} erros e ${formatTime(state.elapsedTime)} de jogo!`);
@@ -1112,10 +1123,10 @@
                     }
                 } else {
                     state.erros++;
-                    if (state.somCartasLigado) playSound(audio.error);
+                    if (state.somCartasLigado && state.audioUnlocked) playSound(audio.error);
                     if (state.erros >= state.maxErros) {
                         clearInterval(state.timerInterval);
-                        if (state.somCartasLigado) playSound(audio.gameOver);
+                        if (state.somCartasLigado && state.audioUnlocked) playSound(audio.gameOver);
                         saveGameState();
                         setTimeout(() => {
                             alert('GAME OVER - Tente novamente');
@@ -1178,7 +1189,7 @@
 
                 if (state.timeRemaining <= 0) {
                     clearInterval(state.timerInterval);
-                    if (state.somCartasLigado) playSound(audio.gameOver);
+                    if (state.somCartasLigado && state.audioUnlocked) playSound(audio.gameOver);
                     saveGameState();
                     alert('GAME OVER! O tempo acabou.');
                     inicializarJogo();
@@ -1209,16 +1220,34 @@
         }
 
         function playSound(sound) {
-            if (!state.somCartasLigado) return;
+            if (!state.somCartasLigado || !state.audioUnlocked) return;
             sound.currentTime = 0;
             try {
-                sound.play().catch(err => console.error('Erro ao tocar som:', err));
+                const playPromise = sound.play();
+                if (playPromise !== undefined) {
+                    playPromise.catch(err => {
+                        console.warn('Falha ao tocar som:', err);
+                    });
+                }
             } catch (err) {
-                console.error('Erro ao tentar tocar som:', err);
+                console.warn('Erro ao tentar tocar som:', err);
             }
         }
 
+        function unlockAudio() {
+            if (state.audioUnlocked) return;
+            state.audioUnlocked = true;
+            // Try to play a silent sound to unlock audio context
+            const silentSound = new Audio();
+            silentSound.volume = 0;
+            silentSound.play().catch(() => {});
+        }
+
         function playMusic() {
+            if (!state.audioUnlocked) {
+                console.warn('Áudio ainda não desbloqueado. Interaja com a página primeiro.');
+                return;
+            }
             if (state.isMusicPlaying) {
                 if (state.continuousMusic) {
                     state.continuousMusic.pause();
@@ -1228,9 +1257,9 @@
                 state.continuousMusic.loop = true;
                 state.continuousMusic.volume = 0.5;
                 try {
-                    state.continuousMusic.play().catch(err => console.error('Erro ao tocar música:', err));
+                    state.continuousMusic.play().catch(err => console.warn('Erro ao tocar música:', err));
                 } catch (err) {
-                    console.error('Erro ao tentar tocar música:', err);
+                    console.warn('Erro ao tentar tocar música:', err);
                 }
                 dom.musicTrackImage.src = config.musicTrackImages[state.currentMusicIndex];
             }
@@ -1277,99 +1306,127 @@
                 return;
             }
             saveGameState();
-            alert('Jogo salvo com sucesso!');
+        }
+
+        function triggerFileInput() {
+            if (state.jogoIniciado && !confirm('Um jogo está em andamento. Deseja carregar um jogo salvo e perder o progresso atual?')) {
+                return;
+            }
+            dom.fileInput.click();
+        }
+
+        function loadFromFile(event) {
+            const file = event.target.files[0];
+            if (!file) {
+                alert('Nenhum arquivo selecionado.');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const gameState = JSON.parse(e.target.result);
+                    carregarJogoEstado(gameState);
+                    alert('Jogo carregado com sucesso!');
+                } catch (err) {
+                    console.error('Erro ao carregar arquivo:', err);
+                    alert('Erro ao carregar o arquivo. Iniciando novo jogo.');
+                    inicializarJogo();
+                }
+            };
+            reader.readAsText(file);
+            dom.fileInput.value = ''; // Reset input
+        }
+
+        function carregarJogoEstado(gameState) {
+            Object.assign(state, gameState);
+
+            // Restore UI
+            dom.nivelSelect.value = gameState.nivel;
+            dom.nivelSelect.disabled = true;
+            dom.playerNameInput.value = state.playerName;
+            updateUI();
+            dom.toleranciaErros.textContent = `Tolerância de erros: ${state.maxErros}`;
+            dom.timer.textContent = `Tempo Restante: ${formatTime(state.timeRemaining)}`;
+            dom.elapsedTimer.textContent = `Tempo Decorrido: ${formatTime(state.elapsedTime)}`;
+
+            // Rebuild game board
+            dom.jogo.innerHTML = '';
+            state.cartas = [];
+            const totalCartas = state.imagens.length;
+            const colunas = 4;
+            const linhas = Math.ceil(totalCartas / colunas);
+            dom.jogo.style.gridTemplateColumns = `repeat(${colunas}, 1fr)`;
+            dom.jogo.style.gridTemplateRows = `repeat(${linhas}, auto)`;
+
+            gameState.cartas.forEach(cartaState => {
+                const carta = document.createElement('div');
+                carta.className = 'carta';
+                carta.dataset.imgSrc = cartaState.imgSrc;
+                carta.dataset.id = cartaState.id;
+                if (cartaState.isFlipped) carta.classList.add('virada');
+                if (cartaState.isMatched) carta.classList.add('combinada');
+                if (cartaState.isHidden) carta.style.visibility = 'hidden';
+
+                const img = document.createElement('img');
+                img.src = cartaState.imgSrc;
+                img.alt = 'Imagem da carta';
+                img.onerror = () => { img.src = 'https://via.placeholder.com/100?text=Carta'; };
+                carta.appendChild(img);
+
+                carta.addEventListener('click', virarCarta);
+                dom.jogo.appendChild(carta);
+                state.cartas.push(carta);
+            });
+
+            // Add placeholder cards for empty slots
+            const totalSlots = colunas * linhas;
+            for (let i = state.cartas.length; i < totalSlots; i++) {
+                const placeholder = document.createElement('div');
+                placeholder.className = 'carta';
+                placeholder.style.visibility = 'hidden';
+                dom.jogo.appendChild(placeholder);
+            }
+
+            state.primeiraCarta = gameState.primeiraCarta ? state.cartas.find(c => c.dataset.id === gameState.primeiraCarta) : null;
+            state.segundaCarta = gameState.primeiraCarta ? state.cartas.find(c => c.dataset.id === gameState.segundaCarta) : null;
+
+            // Update ranking, ensuring no duplicates
+            state.ranking = state.ranking.filter(entry => entry.name !== state.playerName);
+            state.ranking.push({
+                name: state.playerName,
+                level: gameState.nivel,
+                movements: state.movimentos,
+                errors: state.erros,
+                elapsedTime: state.elapsedTime,
+                paresEncontrados: state.paresEncontrados
+            });
+            updateRankingDisplay();
+            localStorage.setItem('memoryGameRanking', JSON.stringify(state.ranking));
+
+            if (state.jogoIniciado) startTimer();
+
+            dom.musicTrackImage.src = config.musicTrackImages[state.currentMusicIndex];
+            dom.playPauseButton.textContent = state.isMusicPlaying ? '⏸' : '▶';
+            if (state.isMusicPlaying) playMusic();
+            updateSoundWave();
         }
 
         function carregarJogo() {
             const latestSaveFile = findLatestSaveFile();
-            if (!latestSaveFile) {
-                alert('Nenhum jogo salvo encontrado.');
-                return;
-            }
-
-            if (state.jogoIniciado && !confirm('Um jogo está em andamento. Deseja carregar o jogo salvo e perder o progresso atual?')) {
-                return;
-            }
-
-            try {
-                const gameState = JSON.parse(localStorage.getItem(latestSaveFile));
-                Object.assign(state, gameState);
-
-                // Restore UI
-                dom.nivelSelect.value = gameState.nivel;
-                dom.nivelSelect.disabled = true;
-                dom.playerNameInput.value = state.playerName;
-                updateUI();
-                dom.toleranciaErros.textContent = `Tolerância de erros: ${state.maxErros}`;
-                dom.timer.textContent = `Tempo Restante: ${formatTime(state.timeRemaining)}`;
-                dom.elapsedTimer.textContent = `Tempo Decorrido: ${formatTime(state.elapsedTime)}`;
-
-                // Rebuild game board
-                dom.jogo.innerHTML = '';
-                state.cartas = [];
-                const totalCartas = state.imagens.length;
-                const colunas = 4;
-                const linhas = Math.ceil(totalCartas / colunas);
-                dom.jogo.style.gridTemplateColumns = `repeat(${colunas}, 1fr)`;
-                dom.jogo.style.gridTemplateRows = `repeat(${linhas}, auto)`;
-
-                gameState.cartas.forEach(cartaState => {
-                    const carta = document.createElement('div');
-                    carta.className = 'carta';
-                    carta.dataset.imgSrc = cartaState.imgSrc;
-                    carta.dataset.id = cartaState.id;
-                    if (cartaState.isFlipped) carta.classList.add('virada');
-                    if (cartaState.isMatched) carta.classList.add('combinada');
-                    if (cartaState.isHidden) carta.style.visibility = 'hidden';
-
-                    const img = document.createElement('img');
-                    img.src = cartaState.imgSrc;
-                    img.alt = 'Imagem da carta';
-                    img.onerror = () => { img.src = 'https://via.placeholder.com/100?text=Carta'; };
-                    carta.appendChild(img);
-
-                    carta.addEventListener('click', virarCarta);
-                    dom.jogo.appendChild(carta);
-                    state.cartas.push(carta);
-                });
-
-                // Add placeholder cards for empty slots
-                const totalSlots = colunas * linhas;
-                for (let i = state.cartas.length; i < totalSlots; i++) {
-                    const placeholder = document.createElement('div');
-                    placeholder.className = 'carta';
-                    placeholder.style.visibility = 'hidden';
-                    dom.jogo.appendChild(placeholder);
+            if (latestSaveFile) {
+                try {
+                    const gameState = JSON.parse(localStorage.getItem(latestSaveFile));
+                    carregarJogoEstado(gameState);
+                    alert('Jogo carregado automaticamente do último backup!');
+                } catch (e) {
+                    console.error('Erro ao carregar jogo:', e);
+                    saveGameState(true);
+                    alert('Nenhum backup válido encontrado. Novo backup salvo.');
                 }
-
-                state.primeiraCarta = gameState.primeiraCarta ? state.cartas.find(c => c.dataset.id === gameState.primeiraCarta) : null;
-                state.segundaCarta = gameState.primeiraCarta ? state.cartas.find(c => c.dataset.id === gameState.segundaCarta) : null;
-
-                // Update ranking, ensuring no duplicates
-                state.ranking = state.ranking.filter(entry => entry.name !== state.playerName);
-                state.ranking.push({
-                    name: state.playerName,
-                    level: gameState.nivel,
-                    movements: state.movimentos,
-                    errors: state.erros,
-                    elapsedTime: state.elapsedTime,
-                    paresEncontrados: state.paresEncontrados
-                });
-                updateRankingDisplay();
-                localStorage.setItem('memoryGameRanking', JSON.stringify(state.ranking));
-
-                if (state.jogoIniciado) startTimer();
-
-                dom.musicTrackImage.src = config.musicTrackImages[state.currentMusicIndex];
-                dom.playPauseButton.textContent = state.isMusicPlaying ? '⏸' : '▶';
-                if (state.isMusicPlaying) playMusic();
-                updateSoundWave();
-
-                alert('Jogo carregado com sucesso!');
-            } catch (e) {
-                console.error('Erro ao carregar jogo:', e);
-                alert('Erro ao carregar o jogo salvo. Iniciando novo jogo.');
-                inicializarJogo();
+            } else {
+                saveGameState(true);
+                alert('Nenhum backup encontrado. Novo backup salvo.');
             }
         }
 
@@ -1403,9 +1460,18 @@
         document.addEventListener('DOMContentLoaded', () => {
             inicializarJogo();
 
+            // Trigger file input for backup loading
+            setTimeout(() => {
+                if (confirm('Deseja carregar um backup do jogo da pasta Downloads?')) {
+                    triggerFileInput();
+                } else {
+                    carregarJogo(); // Fallback to localStorage or save new
+                }
+            }, 500);
+
             dom.playerNameInput.addEventListener('input', () => {
                 checkPlayerName();
-                if (state.somCartasLigado) playSound(audio.key);
+                if (state.somCartasLigado && state.audioUnlocked) playSound(audio.key);
             });
 
             dom.nivelSelect.addEventListener('change', () => {
@@ -1419,10 +1485,13 @@
             });
             dom.nivelSelect.dataset.lastValue = dom.nivelSelect.value;
 
+            // Unlock audio on first user interaction
+            document.addEventListener('click', unlockAudio, { once: true });
+
             // Unified hover sound for buttons and links
             document.addEventListener('mouseover', (event) => {
                 const target = event.target.closest('#iniciar, #reiniciar, #salvar, #carregar, #musica-prev, #musica-play-pause, #musica-next, #som-controle, .main-tabs .tab, .social-media a, .links-list a, #ranking-link a, .copyright a, .contact-form button');
-                if (target && state.somCartasLigado) {
+                if (target && state.somCartasLigado && state.audioUnlocked) {
                     playSound(audio.botao1);
                 }
             });
@@ -1430,7 +1499,7 @@
             // Click sound for non-specific elements
             document.addEventListener('click', event => {
                 const isInteractiveElement = event.target.closest('.carta, #iniciar, #reiniciar, #salvar, #carregar, #musica-prev, #musica-play-pause, #musica-next, #som-controle, .main-tabs .tab, .social-media a, .links-list a, #ranking-link a, .copyright a, .contact-form button, #player-name, #nivel-dificuldade');
-                if (!isInteractiveElement && state.somCartasLigado) {
+                if (!isInteractiveElement && state.somCartasLigado && state.audioUnlocked) {
                     playSound(audio.click);
                 }
             });
