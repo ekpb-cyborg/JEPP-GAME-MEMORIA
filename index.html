@@ -1,0 +1,1440 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, minimum-scale=0.5, maximum-scale=3.0">
+    <title>Jogo da Memória</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" integrity="sha512-z3gLpd7yknf1YoNbCzqRKc4qyor8gaKU1qmn+CShxbuBusANI9QpRohGBreCFkKxLhei6S9CQXFEbbKuqLg0DA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0 auto;
+            padding: 15px;
+            background-color: #f0f0f0;
+            touch-action: manipulation;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        h1, h2 {
+            color: #006400;
+            text-align: center;
+            margin: 10px 0;
+        }
+        .main-tabs {
+            display: flex;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #ccc;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .main-tabs .tab {
+            padding: 8px 12px;
+            cursor: pointer;
+            background: #f1f1f1;
+            border: 1px solid #ccc;
+            border-bottom: none;
+            border-radius: 5px 5px 0 0;
+            margin: 0 3px 0 0;
+            transition: background-color 0.3s;
+        }
+        .main-tabs .tab:hover {
+            background: #e0e0e0;
+            text-decoration: underline;
+        }
+        .main-tabs .tab.active {
+            background: #006400;
+            color: white;
+        }
+        .tab-content {
+            display: none;
+            padding: 15px;
+            border: 1px solid #ccc;
+            border-top: none;
+            background: white;
+            border-radius: 0 0 5px 5px;
+            width: 100%;
+            max-width: 400px;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        #jogo {
+            display: grid;
+            gap: 6px;
+            margin-bottom: 15px;
+            width: 100%;
+            max-width: 400px;
+            grid-template-columns: repeat(4, 1fr);
+        }
+        .carta {
+            width: 100%;
+            height: 0;
+            padding-bottom: 100%;
+            background: #006400;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border-radius: 5px;
+            border: 1px solid #1E90FF;
+            transition: transform 0.3s, opacity 0.5s;
+            opacity: 0;
+            transform: translateY(100px);
+            position: relative;
+        }
+        .carta.subir {
+            opacity: 1;
+            transform: translateY(0);
+            transition: transform 0.5s ease-out, opacity 0.5s ease-out;
+        }
+        .carta.virada {
+            background: #90EE90;
+            transform: rotateY(180deg);
+        }
+        .carta.combinada {
+            background: #ADD8E6;
+            cursor: default;
+        }
+        .carta img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: none;
+            border-radius: 5px;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+        .carta.virada img {
+            display: block;
+        }
+        #game-info {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            margin-bottom: 15px;
+            width: 100%;
+            max-width: 400px;
+        }
+        #stats {
+            text-align: left;
+            width: 100%;
+        }
+        #acertos, #progresso, #tolerancia-erros, #timer, #elapsed-timer {
+            font-size: 1.1em;
+            margin-bottom: 8px;
+        }
+        #progresso {
+            color: #FF4500;
+            font-weight: bold;
+        }
+        #ranking-link {
+            text-align: center;
+            margin-bottom: 15px;
+            width: 100%;
+        }
+        #ranking-link a {
+            color: #0000FF;
+            font-weight: bold;
+            text-decoration: none;
+            font-size: 1.1em;
+        }
+        #ranking-link a:hover {
+            text-decoration: underline;
+        }
+        #contagem-regressiva {
+            text-align: center;
+            font-size: 1.1em;
+            margin-bottom: 15px;
+            color: #006400;
+            display: none;
+            width: 100%;
+        }
+        #botoes-jogo {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 15px;
+            width: 100%;
+            max-width: 400px;
+        }
+        .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+        }
+        #iniciar, #reiniciar, #salvar, #carregar {
+            padding: 7px 14px;
+            background-color: #006400;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.85em;
+            width: 90px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            transition: background-color 0.3s;
+        }
+        #iniciar:hover, #reiniciar:hover, #salvar:hover, #carregar:hover {
+            background-color: #004d00;
+        }
+        #iniciar:disabled, #nivel-dificuldade:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        #audio-controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+            width: 100%;
+            font-size: 1.4em;
+            color: #006400;
+        }
+        #musica-prev, #musica-play-pause, #musica-next, #som-controle {
+            cursor: pointer;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            line-height: 30px;
+            transition: color 0.3s;
+        }
+        #musica-prev:hover, #musica-play-pause:hover, #musica-next:hover, #som-controle:hover {
+            color: #004d00;
+        }
+        #som-controle {
+            font-size: 1.1em;
+            position: relative;
+        }
+        #som-controle.desligado {
+            color: #666;
+        }
+        #som-controle.desligado::after {
+            content: '✕';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 0.7em;
+            color: #666;
+            font-weight: bold;
+        }
+        #dificuldade {
+            text-align: center;
+            margin-bottom: 15px;
+            width: 100%;
+        }
+        #dificuldade label {
+            font-weight: bold;
+            color: #0000FF;
+        }
+        #dificuldade select {
+            padding: 4px;
+            font-size: 0.9em;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            width: 100%;
+            max-width: 180px;
+        }
+        #nome-jogador {
+            text-align: center;
+            margin-bottom: 15px;
+            width: 100%;
+        }
+        #nome-jogador label {
+            display: block;
+            font-weight: bold;
+            color: #0000FF;
+            margin-bottom: 4px;
+        }
+        #nome-jogador input {
+            padding: 4px;
+            font-size: 0.9em;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            width: 100%;
+            max-width: 180px;
+        }
+        #imagem-principal {
+            display: block;
+            width: 100%;
+            max-width: 400px;
+            height: auto;
+            margin: 0 auto 15px;
+            border-radius: 10px;
+        }
+        #music-track-image {
+            display: block;
+            width: 100%;
+            max-width: 400px;
+            height: auto;
+            margin: 0 auto 15px;
+            border-radius: 10px;
+        }
+        #sound-wave {
+            width: 100%;
+            max-width: 400px;
+            height: 50px;
+            background: #000;
+            position: relative;
+            overflow: hidden;
+            border-radius: 5px;
+            margin: 8px auto;
+            display: none;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 4px;
+        }
+        #sound-wave.active {
+            display: flex;
+        }
+        .bar {
+            width: 6px;
+            height: 100%;
+            background: #00FF00;
+            transform: scaleY(0.2);
+            transform-origin: bottom;
+            animation: pulse 1s ease-in-out infinite;
+        }
+        .bar:nth-child(2) { animation-delay: 0.1s; }
+        .bar:nth-child(3) { animation-delay: 0.2s; }
+        .bar:nth-child(4) { animation-delay: 0.3s; }
+        .bar:nth-child(5) { animation-delay: 0.4s; }
+        .bar:nth-child(6) { animation-delay: 0.5s; }
+        .bar:nth-child(7) { animation-delay: 0.6s; }
+        .bar:nth-child(8) { animation-delay: 0.7s; }
+        @keyframes pulse {
+            0% { transform: scaleY(0.2); }
+            50% { transform: scaleY(1); }
+            100% { transform: scaleY(0.2); }
+        }
+        .social-media {
+            margin: 15px 0;
+        }
+        .social-media h3 {
+            color: #006400;
+            font-weight: bold;
+            margin-bottom: 12px;
+        }
+        .social-media a {
+            text-decoration: none;
+            color: #006400;
+        }
+        .social-media a:hover {
+            text-decoration: underline;
+        }
+        .social-media p {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin: 8px 0;
+        }
+        .social-media i {
+            color: #006400;
+            font-size: 1.1em;
+        }
+        .links-list {
+            margin: 15px 0;
+            list-style: none;
+            padding: 0;
+        }
+        .links-list li {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin: 8px 0;
+        }
+        .links-list a {
+            text-decoration: none;
+            color: #006400;
+            font-weight: bold;
+        }
+        .links-list a:hover {
+            text-decoration: underline;
+        }
+        .contact-form {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        .contact-form input, .contact-form textarea {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .contact-form button {
+            background-color: #006400;
+            color: white;
+            border: none;
+            padding: 8px;
+            cursor: pointer;
+            border-radius: 5px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: background-color 0.3s;
+        }
+        .contact-form button:hover {
+            background-color: #004d00;
+        }
+        .copyright {
+            text-align: center;
+            margin-top: 20px;
+            color: #666;
+            font-size: 0.9em;
+        }
+        .copyright a {
+            text-decoration: none;
+            color: #006400;
+            font-weight: bold;
+        }
+        .copyright a:hover {
+            text-decoration: underline;
+        }
+        #ranking-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 0.9em;
+        }
+        #ranking-table th, #ranking-table td {
+            border: 1px solid #ccc;
+            padding: 6px;
+            text-align: center;
+        }
+        #ranking-table th {
+            background-color: #006400;
+            color: white;
+        }
+        @media (max-width: 600px) {
+            body { padding: 10px; }
+            .tab-content { padding: 10px; }
+            #jogo { gap: 5px; max-width: 350px; }
+            .carta { border-width: 0.5px; }
+            #iniciar, #reiniciar, #salvar, #carregar {
+                width: 80px;
+                font-size: 0.75em;
+            }
+            #audio-controls { gap: 10px; }
+            #musica-prev, #musica-play-pause, #musica-next, #som-controle {
+                width: 25px;
+                height: 25px;
+                line-height: 25px;
+            }
+            #dificuldade select, #nome-jogador input { max-width: 160px; }
+            #ranking-table th, #ranking-table td { padding: 4px; font-size: 0.8em; }
+            h1 { font-size: 1.5em; }
+            h2 { font-size: 1.2em; }
+            #music-track-image, #imagem-principal { max-width: 350px; }
+            #sound-wave { height: 40px; max-width: 350px; gap: 3px; }
+            .bar { width: 4px; }
+        }
+    </style>
+</head>
+<body>
+    <h1>Jogo da Memória</h1>
+    
+    <div class="main-tabs">
+        <div class="tab active" onclick="openTab(event, 'jogo-tab')">Jogo</div>
+        <div class="tab" onclick="openTab(event, 'ranking-tab')">Ranking</div>
+        <div class="tab" onclick="openTab(event, 'contato')">Contato</div>
+        <div class="tab" onclick="openTab(event, 'ekpb')">EKPB Digital Music ©</div>
+        <div class="tab" onclick="openTab(event, 'instrucoes')">Instruções</div>
+    </div>
+    
+    <div id="jogo-tab" class="tab-content active">
+        <img id="imagem-principal" src="https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/img/jepp1.jpg" alt="Imagem Principal" onerror="this.src='https://via.placeholder.com/400x200?text=Imagem+Principal'">
+        <div id="dificuldade">
+            <label for="nivel-dificuldade">NÍVEL DE DIFICULDADE:</label>
+            <select id="nivel-dificuldade">
+                <option value="facil">Fácil (10 pares, 3s)</option>
+                <option value="medio">Médio (13 pares, 5s)</option>
+                <option value="dificil">Difícil (16 pares, 10s)</option>
+            </select>
+        </div>
+        <div id="nome-jogador">
+            <label>SEU NOME</label>
+            <input type="text" id="player-name" placeholder="Digite seu nome">
+        </div>
+        <div id="botoes-jogo">
+            <div class="button-group">
+                <button id="iniciar" onclick="startGame()" disabled>INICIAR</button>
+                <button id="reiniciar" onclick="inicializarJogo()">REINICIAR</button>
+            </div>
+            <div class="button-group">
+                <button id="salvar" onclick="salvarJogo()">SALVAR</button>
+                <button id="carregar" onclick="carregarJogo()">CARREGAR</button>
+            </div>
+            <div id="audio-controls">
+                <span id="musica-prev" onclick="playPreviousMusic()">⏮</span>
+                <span id="musica-play-pause" onclick="toggleMusic()">▶</span>
+                <span id="musica-next" onclick="playNextMusic()">⏭</span>
+                <i id="som-controle" class="fas fa-volume-up" onclick="toggleSomCartas()" title="Ligar/Desligar Som das Cartas"></i>
+            </div>
+        </div>
+        <div id="game-info">
+            <div id="stats">
+                <div id="acertos">Acertos: 0</div>
+                <div id="progresso">Progresso: 0%</div>
+                <div id="tolerancia-erros">Tolerância de erros: 10</div>
+                <div id="timer">Tempo Restante: 80.000</div>
+                <div id="elapsed-timer">Tempo Decorrido: 00.000</div>
+            </div>
+        </div>
+        <div id="ranking-link">
+            <a href="#" onclick="openTab(event, 'ranking-tab')">RANKING</a>
+        </div>
+        <div id="sound-wave">
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+        </div>
+        <img id="music-track-image" src="https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/img/img_mp3/musical1.jpg" alt="Faixa Musical" onerror="this.src='https://via.placeholder.com/400x200?text=Faixa+Musical'">
+        <div id="contagem-regressiva"></div>
+        <div id="jogo"></div>
+    </div>
+    
+    <div id="ranking-tab" class="tab-content">
+        <h2>Ranking</h2>
+        <table id="ranking-table">
+            <thead>
+                <tr>
+                    <th>Posição</th>
+                    <th>Nome</th>
+                    <th>Nível</th>
+                    <th>Mov</th>
+                    <th>Erros</th>
+                    <th>Tempo</th>
+                </tr>
+            </thead>
+            <tbody id="ranking-list"></tbody>
+        </table>
+    </div>
+    
+    <div id="contato" class="tab-content">
+        <h2>Contato</h2>
+        <div class="contact-form">
+            <input type="text" placeholder="Nome" id="nome">
+            <input type="email" placeholder="Email" id="email">
+            <textarea placeholder="Mensagem" id="mensagem" rows="5"></textarea>
+            <button onclick="enviarMensagem()">Enviar</button>
+        </div>
+        <div class="social-media">
+            <h3>EKPB Digital Music ©</h3>
+            <p><strong>Siga-nos nas Redes Sociais:</strong></p>
+            <p><i class="fab fa-instagram"></i> Instagram: <a href="https://instagram.com/ekpbdigitalmusic" target="_blank">@ekpbdigitalmusic</a></p>
+            <p><i class="fab fa-youtube"></i> YouTube: <a href="https://youtube.com/@ekpbdigitalmusic" target="_blank">@ekpbdigitalmusic</a></p>
+            <p><i class="fab fa-tiktok"></i> TikTok: <a href="https://tiktok.com/@ekpbdigitalmusic" target="_blank">@ekpbdigitalmusic</a></p>
+            <p><i class="fas fa-video"></i> Kwai: <a href="https://kwai.com/@ekpbdigitalmusic" target="_blank">@ekpbdigitalmusic</a></p>
+            <p><i class="fas fa-envelope"></i> Email: <a href="mailto:ekpbdigitalmusic@gmail.com">ekpbdigitalmusic@gmail.com</a></p>
+            <p><strong>Compositor</strong></p>
+            <p><i class="fab fa-instagram"></i> Instagram: <a href="https://instagram.com/edsonk.palacio" target="_blank">@edsonk.palacio</a></p>
+            <p><i class="fab fa-youtube"></i> YouTube: <a href="https://youtube.com/@edsonkpalacioo" target="_blank">@edsonkpalacioo</a></p>
+            <p><i class="fab fa-tiktok"></i> TikTok: <a href="https://tiktok.com/@edsonkpalacio" target="_blank">@edsonkpalacio</a></p>
+            <p><i class="fas fa-video"></i> Kwai: <a href="https://kwai.com/@edsonkpalacio" target="_blank">@edsonkpalacio</a></p>
+            <p><i class="fas fa-envelope"></i> Email: <a href="mailto:edsonkpalacio@gmail.com">edsonkpalacio@gmail.com</a></p>
+            <p><i class="fab fa-whatsapp"></i> Cel: <a href="https://wa.me/5588996812029" target="_blank">(88) 99681-2029</a></p>
+        </div>
+    </div>
+    
+    <div id="ekpb" class="tab-content">
+        <h2>EKPB Digital Music ©</h2>
+        <ul class="links-list">
+            <li><i class="fab fa-youtube"></i> <a href="https://www.youtube.com/watch?v=AZ0mhfobGDc" target="_blank">Sobre Esta Pedra</a></li>
+            <li><i class="fab fa-youtube"></i> <a href="https://www.letras.mus.br/ekpb-digital-music/amor-de-pai-e-filho-grandes-amigos/" target="_blank">Amor de Pai e Filho Grandes Amigos</a></li>
+            <li><i class="fab fa-youtube"></i> <a href="https://www.youtube.com/watch?v=nKxcs" target="_blank">Vicent's Churrascaria</a></li>
+            <li><i class="fab fa-youtube"></i> <a href="https://www.youtube.com/watch?v=pyAn-MI0spg" target="_blank">Joker Tecnologia</a></li>
+            <li><i class="fab fa-youtube"></i> <a href="https://www.youtube.com/watch?v=Csu2ZmEYxjk" target="_blank">Mãe da Igreja Mãe do Amor</a></li>
+            <li><i class="fab fa-youtube"></i> <a href="https://www.youtube.com/watch?v=a7QLC03pRug" target="_blank">Kauan Lugar Feito Para Você</a></li>
+            <li><i class="fab fa-youtube"></i> <a href="https://www.youtube.com/watch?v=i-11gRpD2iE" target="_blank">Vita Gula - Um Hit No Lar</a></li>
+            <li><i class="fab fa-youtube"></i> <a href="https://www.youtube.com/watch?v=O-DbYY9Q6J8" target="_blank">Vita Gula - Um Hit No Lar Hit</a></li>
+            <li><i class="fab fa-youtube"></i> <a href="https://www.youtube.com/watch?v=pnodRjA3cYc" target="_blank">Mother of the Church, Mother of Love</a></li>
+            <li><i class="fab fa-youtube"></i> <a href="https://www.youtube.com/watch?v=ExRj-zwmnk" target="_blank">Aleatory Family</a></li>
+        </ul>
+        <div class="social-media">
+            <h3>Canais no YouTube</h3>
+            <p><i class="fab fa-youtube"></i> <a href="https://youtube.com/@ekpbdigitalmusic" target="_blank">@ekpbdigitalmusic</a></p>
+            <p><i class="fab fa-youtube"></i> <a href="https://youtube.com/@edsonkpalacio" target="_blank">@edsonkpalacio</a></p>
+            <p><i class="fab fa-youtube"></i> <a href="https://youtube.com/@edsonkpalacioo" target="_blank">@edsonkpalacioo</a></p>
+        </div>
+    </div>
+    
+    <div id="instrucoes" class="tab-content">
+        <h2>Instruções de Uso</h2>
+        <p>Bem-vindo(a) ao Jogo da Memória! Este jogo é simples e divertido, projetado para testar sua memória e concentração. Abaixo, você encontrará as instruções para jogar:</p>
+        <h3>Como Jogar</h3>
+        <ul>
+            <li><strong>Regras Importantes:</strong>
+                <ul>
+                    <li>1 - Não fotografar a tela.</li>
+                    <li>2 - Não fazer print.</li>
+                </ul>
+            </li>
+            <li><strong>Escolha o Nível de Dificuldade:</strong> Antes de começar, selecione o nível de dificuldade (Fácil, Médio ou Difícil) no menu suspenso. Isso determinará o número de cartas, o tempo de exposição inicial e o tempo limite:
+                <ul>
+                    <li><strong>Fácil:</strong> 10 pares (20 cartas), 3 segundos de exposição inicial, 80 segundos de jogo, 10 erros máximos.</li>
+                    <li><strong>Médio:</strong> 13 pares (26 cartas), 5 segundos de exposição inicial, 100 segundos de jogo, 15 erros máximos.</li>
+                    <li><strong>Difícil:</strong> 16 pares (32 cartas), 10 segundos de exposição inicial, 150 segundos de jogo, 20 erros máximos.</li>
+                </ul>
+                Após iniciar o jogo, o nível de dificuldade ficará bloqueado. Para mudar o nível, finalize o jogo (vencendo ou perdendo) ou clique em "REINICIAR".
+            </li>
+            <li><strong>Iniciar o Jogo:</strong> Digite seu nome no campo "SEU NOME". Clique em qualquer parte da tela (exceto no menu de dificuldade ou ícones de som) para focar no campo de nome. Em seguida, clique no botão "INICIAR". Você só pode clicar em "INICIAR" uma vez por partida. Para iniciar um novo jogo, finalize o atual (vencendo ou perdendo) ou clique em "REINICIAR". Após clicar em "INICIAR", seu nome será adicionado ao ranking, as cartas irão subir, o tabuleiro será centralizado na tela, e as cartas serão viradas por um curto período (dependendo do nível de dificuldade) para você memorizar. Um som de início será tocado, e uma contagem regressiva será exibida. Após isso, as cartas serão viradas automaticamente para baixo, e o temporizador do jogo começará. Uma música instrumental suave começará a tocar, e um painel de ondas sonoras vibrante será exibido.</li>
+            <li><strong>Controle de Áudio:</strong> Use os controles ao lado dos botões para ajustar o áudio:
+                <ul>
+                    <li><i class="fas fa-hand-pointer"></i> Clique em ⏮ para tocar a música anterior na playlist.</li>
+                    <li><i class="fas fa-hand-pointer"></i> Clique em ▶ para tocar ou ⏸ para pausar a música de fundo. A música é uma instrumental suave que toca continuamente durante o jogo. Quando a música estiver tocando, um painel de equalizador moderno será exibido e animado, e a imagem da faixa musical será atualizada.</li>
+                    <li><i class="fas fa-hand-pointer"></i> Clique em ⏭ para tocar a próxima música na playlist. Se não houver mais músicas, a playlist volta para a primeira faixa (musical1).</li>
+                    <li><i class="fas fa-volume-up"></i> Liga/desliga os sons das cartas e ações (como virar carta, erros, acertos, som de início, "GAME OVER", aplausos na vitória e sons de hover). Quando desativado, o ícone fica cinza com um "✕" sobreposto.</li>
+                    <li>Um som de clique leve será reproduzido ao clicar em qualquer parte da página, exceto onde outros sons já estão associados (como cartas e botões).</li>
+                    <li>Um som de hover será reproduzido ao passar o mouse sobre botões (INICIAR, REINICIAR, SALVAR, CARREGAR, controles de áudio) e links (abas de navegação, redes sociais, link do ranking, links do EKPB Digital Music, e link do copyright).</li>
+                </ul>
+            </li>
+            <li><strong>Objetivo:</strong> Encontre todos os pares de imagens iguais dentro do tempo limite e com um número limitado de erros, dependendo do nível:
+                <ul>
+                    <li><strong>Fácil:</strong> 80 segundos, máximo de 10 erros.</li>
+                    <li><strong>Médio:</strong> 100 segundos, máximo de 15 erros.</li>
+                    <li><strong>Difícil:</strong> 150 segundos, máximo de 20 erros.</li>
+                </ul>
+            </li>
+            <li><strong>Passo a Passo:</strong>
+                <ul>
+                    <li>Clique em uma carta para virá-la e revelar a imagem escondida.</li>
+                    <li>Clique em uma segunda carta para tentar encontrar o par correspondente.</li>
+                    <li>Se as duas imagens forem iguais, elas permanecerão viradas e você encontrou um par! Um som específico será tocado, o número de acertos e o progresso serão atualizados.</li>
+                    <li>Se forem diferentes, as cartas serão viradas para baixo novamente, e o número de erros será incrementado.</li>
+                    <li>Continue até encontrar todos os pares ou até o tempo acabar ou atingir o limite de erros.</li>
+                </ul>
+            </li>
+            <li><strong>Movimentos:</strong> O número de movimentos é contado a cada par de cartas que você vira.</li>
+            <li><strong>Erros:</strong> Se você atingir o limite de erros para o nível escolhido, o jogo termina com "GAME OVER - Tente novamente". Um som de "GAME OVER" será tocado.</li>
+            <li><strong>Tempo:</strong> Você tem um tempo limite para completar o jogo (mostrado como "Tempo Restante"), dependendo do nível. Se o tempo acabar, o jogo termina com "GAME OVER" e um som de "GAME OVER" será tocado. O "Tempo Decorrido" mostra quanto tempo você levou jogando.</li>
+            <li><strong>Vitória:</strong> Você vence quando todas as cartas forem combinadas. Um som de aplausos será tocado, um alerta será exibido parabenizando você, e sua pontuação será exibida.</li>
+            <li><strong>Reiniciar:</strong> Clique no botão "REINICIAR" para começar uma nova partida a qualquer momento.</li>
+            <li><strong>Salvar e Carregar:</strong> Clique em "SALVAR" para salvar o progresso do jogo. Clique em "CARREGAR" para retomar um jogo salvo anteriormente. Use o botão "CARREGAR" para restaurar um backup, com confirmação para evitar sobrescrever o jogo atual.</li>
+        </ul>
+        <h3>Dicas</h3>
+        <ul>
+            <li>Preste atenção às posições das cartas durante o período inicial para lembrar onde estão as imagens.</li>
+            <li>Tente virar as cartas em pares para minimizar os movimentos e erros.</li>
+            <li>Passe o mouse sobre botões e links para um feedback sonoro (se o som estiver ligado).</li>
+            <li>Se precisar de ajuda ou quiser entrar em contato, vá até a aba "Contato".</li>
+        </ul>
+    </div>
+    
+    <div class="copyright">
+        Tabela do Brasileirão EKPB Digital Music © | Powered by <a href="https://ekpbdigitalmusic.my.canva.site/" target="_blank">Edson Palácio</a>
+    </div>
+    
+    <script>
+        // Game configuration
+        const config = {
+            imagens: [
+                'https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/img/carta1.jpg',
+                'https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/img/carta1.jpg',
+                'https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/img/carta2.jpg',
+                'https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/img/carta2.jpg',
+                'https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/img/carta3.jpg',
+                'https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/img/carta3.jpg',
+                'https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/img/carta4.jpg',
+                'https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/img/carta4.jpg',
+                'https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/img/carta5.jpg',
+                'https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/img/carta5.jpg',
+                'https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/img/carta6.jpg',
+                'https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/img/carta6.jpg',
+                'https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/img/carta7.jpg',
+                'https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/img/carta7.jpg',
+                'https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/img/carta8.jpg',
+                'https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/img/carta8.jpg',
+                'https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/img/carta9.jpg',
+                'https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/img/carta9.jpg',
+                'https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/img/carta10.jpg',
+                'https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/img/carta10.jpg',
+                'https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/img/carta11.jpg',
+                'https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/img/carta11.jpg',
+                'https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/img/carta12.jpg',
+                'https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/img/carta12.jpg',
+                'https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/img/carta13.jpg',
+                'https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/img/carta13.jpg',
+                'https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/img/carta14.jpg',
+                'https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/img/carta14.jpg',
+                'https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/img/carta15.jpg',
+                'https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/img/carta15.jpg',
+                'https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/img/carta16.jpg',
+                'https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/img/carta16.jpg'
+            ],
+            playlist: [
+                'https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/aud/musical1.mp3',
+                'https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/aud/musical2.mp3',
+                'https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/aud/musical3.mp3'
+            ],
+            musicTrackImages: [
+                'https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/img/img_mp3/musical1.jpg',
+                'https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/img/img_mp3/musical2.jpg',
+                'https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/img/img_mp3/musical3.jpg'
+            ],
+            sounds: {
+                card: 'https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/aud/flip.mp3',
+                success: 'https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/aud/yes_1.mp3',
+                error: 'https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/aud/no_4.mp3',
+                start: 'https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/aud/start-game.mp3',
+                gameOver: 'https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/aud/game-over.mp3',
+                applause: 'https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/aud/applause.mp3',
+                key: 'https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/aud/tecla.mp3',
+                click: 'https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/aud/click.mp3',
+                botao1: 'https://raw.githubusercontent.com/ekpb-cyborg/JEPP-GAME-MEMORIA/refs/heads/main/aud/Botaos/botao1.mp3'
+            },
+            levels: {
+                facil: { pairs: 10, exposure: 3000, time: 80000, maxErrors: 10 },
+                medio: { pairs: 13, exposure: 5000, time: 100000, maxErrors: 15 },
+                dificil: { pairs: 16, exposure: 10000, time: 150000, maxErrors: 20 }
+            }
+        };
+
+        // Game state
+        let state = {
+            imagens: [],
+            cartas: [],
+            primeiraCarta: null,
+            segundaCarta: null,
+            movimentos: 0,
+            erros: 0,
+            paresEncontrados: 0,
+            bloqueado: false,
+            jogoIniciado: false,
+            timerInterval: null,
+            timeRemaining: 80000,
+            elapsedTime: 0,
+            maxErros: 10,
+            playerName: '',
+            currentMusicIndex: 0,
+            somCartasLigado: true,
+            isMusicPlaying: false,
+            continuousMusic: null,
+            ranking: []
+        };
+
+        // Audio elements
+        const audio = {
+            card: new Audio(config.sounds.card),
+            success: new Audio(config.sounds.success),
+            error: new Audio(config.sounds.error),
+            start: new Audio(config.sounds.start),
+            gameOver: new Audio(config.sounds.gameOver),
+            applause: new Audio(config.sounds.applause),
+            key: new Audio(config.sounds.key),
+            click: new Audio(config.sounds.click),
+            botao1: new Audio(config.sounds.botao1)
+        };
+
+        // Set audio properties
+        Object.values(audio).forEach(a => {
+            a.volume = (a === audio.key || a === audio.click || a === audio.botao1) ? 0.5 : 1.0;
+            a.loop = false;
+        });
+
+        // DOM elements
+        const dom = {
+            jogo: document.getElementById('jogo'),
+            nivelSelect: document.getElementById('nivel-dificuldade'),
+            playerNameInput: document.getElementById('player-name'),
+            startButton: document.getElementById('iniciar'),
+            acertos: document.getElementById('acertos'),
+            progresso: document.getElementById('progresso'),
+            toleranciaErros: document.getElementById('tolerancia-erros'),
+            timer: document.getElementById('timer'),
+            elapsedTimer: document.getElementById('elapsed-timer'),
+            contagemRegressiva: document.getElementById('contagem-regressiva'),
+            musicTrackImage: document.getElementById('music-track-image'),
+            playPauseButton: document.getElementById('musica-play-pause'),
+            soundWave: document.getElementById('sound-wave'),
+            somControle: document.getElementById('som-controle'),
+            rankingList: document.getElementById('ranking-list')
+        };
+
+        // Utility function to generate file name based on current date/time
+        function generateFileName() {
+            const now = new Date();
+            const day = now.getDate().toString().padStart(2, '0');
+            const month = (now.getMonth() + 1).toString().padStart(2, '0');
+            const year = now.getFullYear().toString().slice(-2);
+            const hours = now.getHours().toString().padStart(2, '0');
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+            const seconds = now.getSeconds().toString().padStart(2, '0');
+            const milliseconds = now.getMilliseconds().toString().padStart(3, '0');
+            return `game_memory_save_dt_${day}_${month}_${year}_h_${hours}_${minutes}_${seconds}_${milliseconds}.json`;
+        }
+
+        // Utility function to find the most recent save file in localStorage
+        function findLatestSaveFile() {
+            const keys = Object.keys(localStorage);
+            const saveFiles = keys.filter(key => key.startsWith('game_memory_save_dt_') && key.endsWith('.json'));
+            if (saveFiles.length === 0) return null;
+            return saveFiles.sort().reverse()[0]; // Latest file first
+        }
+
+        // Function to save game state to localStorage and trigger download
+        function saveGameState() {
+            const gameState = {
+                ...state,
+                cartas: state.cartas.map(carta => ({
+                    imgSrc: carta.dataset.imgSrc,
+                    id: carta.dataset.id,
+                    isFlipped: carta.classList.contains('virada'),
+                    isMatched: carta.classList.contains('combinada'),
+                    isHidden: carta.style.visibility === 'hidden'
+                })),
+                primeiraCarta: state.primeiraCarta ? state.primeiraCarta.dataset.id : null,
+                segundaCarta: state.segundaCarta ? state.segundaCarta.dataset.id : null,
+                nivel: dom.nivelSelect.value
+            };
+
+            const fileName = generateFileName();
+            localStorage.setItem(fileName, JSON.stringify(gameState));
+            localStorage.setItem('memoryGameRanking', JSON.stringify(state.ranking));
+
+            // Create downloadable JSON file
+            const blob = new Blob([JSON.stringify(gameState, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // Function to update ranking display
+        function updateRankingDisplay() {
+            // Sort ranking: completed games (all pairs found) by elapsedTime, then incomplete games
+            const sortedRanking = state.ranking
+                .map(entry => ({
+                    ...entry,
+                    isComplete: entry.paresEncontrados >= config.levels[entry.level].pairs
+                }))
+                .sort((a, b) => {
+                    if (a.isComplete && b.isComplete) return a.elapsedTime - b.elapsedTime;
+                    if (a.isComplete) return -1;
+                    if (b.isComplete) return 1;
+                    return a.name.localeCompare(b.name);
+                })
+                .slice(0, 10); // Limit to top 10
+
+            dom.rankingList.innerHTML = '';
+            sortedRanking.forEach((entry, index) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td>${entry.name}</td>
+                    <td>${entry.level.charAt(0).toUpperCase() + entry.level.slice(1)}</td>
+                    <td>${entry.movements}</td>
+                    <td>${entry.errors}</td>
+                    <td>${formatTime(entry.elapsedTime)}</td>
+                `;
+                dom.rankingList.appendChild(tr);
+            });
+        }
+
+        // Initialize game
+        function inicializarJogo() {
+            const nivel = dom.nivelSelect.value;
+            const levelConfig = config.levels[nivel];
+
+            // Reset state
+            Object.assign(state, {
+                imagens: config.imagens.slice(0, levelConfig.pairs * 2),
+                cartas: [],
+                primeiraCarta: null,
+                segundaCarta: null,
+                movimentos: 0,
+                erros: 0,
+                paresEncontrados: 0,
+                bloqueado: false,
+                jogoIniciado: false,
+                timeRemaining: levelConfig.time,
+                elapsedTime: 0,
+                maxErros: levelConfig.maxErrors,
+                playerName: ''
+            });
+
+            // Clear existing timer
+            if (state.timerInterval) clearInterval(state.timerInterval);
+
+            // Reset UI
+            dom.jogo.innerHTML = '';
+            dom.acertos.textContent = `Acertos: 0`;
+            dom.progresso.textContent = `Progresso: 0%`;
+            dom.toleranciaErros.textContent = `Tolerância de erros: ${state.maxErros}`;
+            dom.timer.textContent = `Tempo Restante: ${formatTime(state.timeRemaining)}`;
+            dom.elapsedTimer.textContent = `Tempo Decorrido: ${formatTime(state.elapsedTime)}`;
+            dom.contagemRegressiva.style.display = 'none';
+            dom.playerNameInput.value = '';
+            dom.nivelSelect.disabled = false;
+            checkPlayerName();
+
+            // Stop music
+            if (state.continuousMusic) {
+                state.continuousMusic.pause();
+                state.continuousMusic.currentTime = 0;
+                state.isMusicPlaying = false;
+                dom.playPauseButton.textContent = '▶';
+                updateSoundWave();
+            }
+
+            // Reset sound control
+            dom.somControle.className = 'fas fa-volume-up';
+            if (!state.somCartasLigado) dom.somControle.classList.add('desligado');
+
+            // Setup game board
+            const totalCartas = levelConfig.pairs * 2;
+            const colunas = 4;
+            const linhas = Math.ceil(totalCartas / colunas);
+            dom.jogo.style.gridTemplateColumns = `repeat(${colunas}, 1fr)`;
+            dom.jogo.style.gridTemplateRows = `repeat(${linhas}, auto)`;
+
+            const imagensEmbaralhadas = embaralhar([...state.imagens]);
+            imagensEmbaralhadas.forEach((imgSrc, idx) => {
+                const carta = document.createElement('div');
+                carta.className = 'carta';
+                carta.dataset.imgSrc = imgSrc;
+                carta.dataset.id = idx;
+
+                const img = document.createElement('img');
+                img.src = imgSrc;
+                img.alt = 'Imagem da carta';
+                img.onerror = () => { img.src = 'https://via.placeholder.com/100?text=Carta'; };
+                carta.appendChild(img);
+
+                carta.addEventListener('click', virarCarta);
+                dom.jogo.appendChild(carta);
+                state.cartas.push(carta);
+            });
+
+            // Add placeholder cards for empty slots
+            const totalSlots = colunas * linhas;
+            for (let i = state.cartas.length; i < totalSlots; i++) {
+                const placeholder = document.createElement('div');
+                placeholder.className = 'carta';
+                placeholder.style.visibility = 'hidden';
+                dom.jogo.appendChild(placeholder);
+            }
+
+            // Reset music
+            state.currentMusicIndex = 0;
+            dom.musicTrackImage.src = config.musicTrackImages[state.currentMusicIndex];
+            updateSoundWave();
+
+            // Load ranking from localStorage
+            const savedRanking = localStorage.getItem('memoryGameRanking');
+            if (savedRanking) {
+                state.ranking = JSON.parse(savedRanking);
+            } else {
+                state.ranking = [];
+            }
+            updateRankingDisplay();
+        }
+
+        // Start game
+        function startGame() {
+            if (!state.playerName) {
+                alert('Por favor, insira seu nome antes de iniciar o jogo.');
+                return;
+            }
+            if (state.jogoIniciado) {
+                alert('Finalize ou reinicie o jogo para iniciar novamente.');
+                return;
+            }
+
+            // Remove any existing entries for this player
+            state.ranking = state.ranking.filter(entry => entry.name !== state.playerName);
+            state.ranking.push({
+                name: state.playerName,
+                level: dom.nivelSelect.value,
+                movements: 0,
+                errors: 0,
+                elapsedTime: 0,
+                paresEncontrados: 0
+            });
+            updateRankingDisplay();
+            localStorage.setItem('memoryGameRanking', JSON.stringify(state.ranking));
+
+            alert('Regras:\n1 - Não fotografar a tela.\n2 - Não fazer print.\n3 - Esteja atento ao tempo.');
+            if (state.somCartasLigado) playSound(audio.start);
+
+            dom.nivelSelect.disabled = true;
+            state.bloqueado = true;
+            const levelConfig = config.levels[dom.nivelSelect.value];
+
+            // Start music
+            state.isMusicPlaying = true;
+            dom.playPauseButton.textContent = '⏸';
+            playMusic();
+
+            // Animate cards
+            state.cartas.forEach((carta, index) => {
+                if (carta.style.visibility !== 'hidden') {
+                    setTimeout(() => carta.classList.add('subir'), index * 50);
+                }
+            });
+
+            // Scroll to game board
+            setTimeout(() => {
+                dom.jogo.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, state.cartas.length * 50 + 100);
+
+            // Show cards
+            state.cartas.forEach(carta => {
+                if (!carta.classList.contains('combinada') && carta.style.visibility !== 'hidden') {
+                    setTimeout(() => carta.classList.add('virada'), state.cartas.length * 50);
+                }
+            });
+
+            // Countdown
+            let segundosRestantes = Math.floor(levelConfig.exposure / 1000);
+            dom.contagemRegressiva.style.display = 'block';
+            dom.contagemRegressiva.textContent = `Tempo restante: ${segundosRestantes}`;
+
+            const intervalo = setInterval(() => {
+                segundosRestantes--;
+                if (segundosRestantes >= 0) {
+                    dom.contagemRegressiva.textContent = `Tempo restante: ${segundosRestantes}`;
+                } else {
+                    clearInterval(intervalo);
+                    dom.contagemRegressiva.style.display = 'none';
+                    state.cartas.forEach(carta => {
+                        if (!carta.classList.contains('combinada') && carta.style.visibility !== 'hidden') {
+                            carta.classList.remove('virada');
+                        }
+                    });
+                    state.bloqueado = false;
+                    state.jogoIniciado = true;
+                    startTimer();
+                }
+            }, 1000);
+        }
+
+        // Flip card with debouncing
+        let lastClickTime = 0;
+        function virarCarta() {
+            const now = Date.now();
+            if (now - lastClickTime < 200) return; // Debounce clicks within 200ms
+            lastClickTime = now;
+
+            if (!state.jogoIniciado) {
+                alert("É necessário primeiro inserir o nome do jogador e clicar em INICIAR.");
+                return;
+            }
+            if (state.bloqueado || this.classList.contains('virada') || this.classList.contains('combinada') || this.style.visibility === 'hidden') return;
+
+            if (state.somCartasLigado) playSound(audio.card);
+            this.classList.add('virada');
+
+            if (!state.primeiraCarta) {
+                state.primeiraCarta = this;
+            } else {
+                state.segundaCarta = this;
+                state.movimentos++;
+
+                if (state.primeiraCarta.dataset.imgSrc === state.segundaCarta.dataset.imgSrc) {
+                    state.primeiraCarta.classList.add('combinada');
+                    state.segundaCarta.classList.add('combinada');
+                    state.paresEncontrados++;
+                    updateUI();
+                    if (state.somCartasLigado) playSound(audio.success);
+                    resetarSelecao();
+
+                    if (state.paresEncontrados === state.imagens.length / 2) {
+                        clearInterval(state.timerInterval);
+                        if (state.somCartasLigado) playSound(audio.applause);
+                        saveGameState();
+                        setTimeout(() => {
+                            alert(`Parabéns! Você venceu em ${state.movimentos} movimentos com ${state.erros} erros e ${formatTime(state.elapsedTime)} de jogo!`);
+                            inicializarJogo();
+                        }, 500);
+                    }
+                } else {
+                    state.erros++;
+                    if (state.somCartasLigado) playSound(audio.error);
+                    if (state.erros >= state.maxErros) {
+                        clearInterval(state.timerInterval);
+                        if (state.somCartasLigado) playSound(audio.gameOver);
+                        saveGameState();
+                        setTimeout(() => {
+                            alert('GAME OVER - Tente novamente');
+                            inicializarJogo();
+                        }, 500);
+                        return;
+                    }
+                    state.bloqueado = true;
+                    setTimeout(() => {
+                        state.primeiraCarta.classList.remove('virada');
+                        state.segundaCarta.classList.remove('virada');
+                        resetarSelecao();
+                        state.bloqueado = false;
+                    }, 1000);
+                }
+            }
+        }
+
+        // Helper functions
+        function formatTime(milliseconds) {
+            const seconds = Math.floor(milliseconds / 1000);
+            const millis = milliseconds % 1000;
+            return `${seconds.toString().padStart(2, '0')}.${millis.toString().padStart(3, '0')}`;
+        }
+
+        function updateUI() {
+            dom.acertos.textContent = `Acertos: ${state.paresEncontrados}`;
+            const progresso = Math.round((state.paresEncontrados / (state.imagens.length / 2)) * 100);
+            dom.progresso.textContent = `Progresso: ${progresso}%`;
+
+            // Update ranking for current player
+            const playerEntry = state.ranking.find(entry => entry.name === state.playerName);
+            if (playerEntry) {
+                playerEntry.movements = state.movimentos;
+                playerEntry.errors = state.erros;
+                playerEntry.paresEncontrados = state.paresEncontrados;
+                updateRankingDisplay();
+                localStorage.setItem('memoryGameRanking', JSON.stringify(state.ranking));
+            }
+        }
+
+        function startTimer() {
+            if (state.timerInterval) clearInterval(state.timerInterval);
+            dom.timer.textContent = `Tempo Restante: ${formatTime(state.timeRemaining)}`;
+            dom.elapsedTimer.textContent = `Tempo Decorrido: ${formatTime(state.elapsedTime)}`;
+            state.timerInterval = setInterval(() => {
+                if (!state.jogoIniciado) return;
+                state.timeRemaining -= 10;
+                state.elapsedTime += 10;
+                dom.timer.textContent = `Tempo Restante: ${formatTime(state.timeRemaining)}`;
+                dom.elapsedTimer.textContent = `Tempo Decorrido: ${formatTime(state.elapsedTime)}`;
+
+                // Update ranking elapsed time
+                const playerEntry = state.ranking.find(entry => entry.name === state.playerName);
+                if (playerEntry) {
+                    playerEntry.elapsedTime = state.elapsedTime;
+                    updateRankingDisplay();
+                    localStorage.setItem('memoryGameRanking', JSON.stringify(state.ranking));
+                }
+
+                if (state.timeRemaining <= 0) {
+                    clearInterval(state.timerInterval);
+                    if (state.somCartasLigado) playSound(audio.gameOver);
+                    saveGameState();
+                    alert('GAME OVER! O tempo acabou.');
+                    inicializarJogo();
+                }
+            }, 10);
+        }
+
+        function embaralhar(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function resetarSelecao() {
+            state.primeiraCarta = null;
+            state.segundaCarta = null;
+        }
+
+        function checkPlayerName() {
+            state.playerName = dom.playerNameInput.value.trim();
+            dom.startButton.disabled = !state.playerName;
+        }
+
+        function updateSoundWave() {
+            dom.soundWave.classList.toggle('active', state.isMusicPlaying);
+        }
+
+        function playSound(sound) {
+            if (!state.somCartasLigado) return;
+            sound.currentTime = 0;
+            try {
+                sound.play().catch(err => console.error('Erro ao tocar som:', err));
+            } catch (err) {
+                console.error('Erro ao tentar tocar som:', err);
+            }
+        }
+
+        function playMusic() {
+            if (state.isMusicPlaying) {
+                if (state.continuousMusic) {
+                    state.continuousMusic.pause();
+                    state.continuousMusic.currentTime = 0;
+                }
+                state.continuousMusic = new Audio(config.playlist[state.currentMusicIndex]);
+                state.continuousMusic.loop = true;
+                state.continuousMusic.volume = 0.5;
+                try {
+                    state.continuousMusic.play().catch(err => console.error('Erro ao tocar música:', err));
+                } catch (err) {
+                    console.error('Erro ao tentar tocar música:', err);
+                }
+                dom.musicTrackImage.src = config.musicTrackImages[state.currentMusicIndex];
+            }
+            updateSoundWave();
+        }
+
+        function playNextMusic() {
+            state.currentMusicIndex = (state.currentMusicIndex + 1) % config.playlist.length;
+            dom.musicTrackImage.src = config.musicTrackImages[state.currentMusicIndex];
+            playMusic();
+        }
+
+        function playPreviousMusic() {
+            state.currentMusicIndex = (state.currentMusicIndex - 1 + config.playlist.length) % config.playlist.length;
+            dom.musicTrackImage.src = config.musicTrackImages[state.currentMusicIndex];
+            playMusic();
+        }
+
+        function toggleMusic() {
+            state.isMusicPlaying = !state.isMusicPlaying;
+            dom.playPauseButton.textContent = state.isMusicPlaying ? '⏸' : '▶';
+            if (state.isMusicPlaying) {
+                playMusic();
+            } else if (state.continuousMusic) {
+                state.continuousMusic.pause();
+            }
+            updateSoundWave();
+        }
+
+        function toggleSomCartas() {
+            state.somCartasLigado = !state.somCartasLigado;
+            dom.somControle.className = 'fas fa-volume-up';
+            if (!state.somCartasLigado) {
+                dom.somControle.classList.add('desligado');
+                Object.values(audio).forEach(a => a.pause());
+            } else {
+                dom.somControle.classList.remove('desligado');
+            }
+        }
+
+        function salvarJogo() {
+            if (!state.jogoIniciado) {
+                alert('Inicie o jogo antes de salvar.');
+                return;
+            }
+            saveGameState();
+            alert('Jogo salvo com sucesso!');
+        }
+
+        function carregarJogo() {
+            const latestSaveFile = findLatestSaveFile();
+            if (!latestSaveFile) {
+                alert('Nenhum jogo salvo encontrado.');
+                return;
+            }
+
+            if (state.jogoIniciado && !confirm('Um jogo está em andamento. Deseja carregar o jogo salvo e perder o progresso atual?')) {
+                return;
+            }
+
+            try {
+                const gameState = JSON.parse(localStorage.getItem(latestSaveFile));
+                Object.assign(state, gameState);
+
+                // Restore UI
+                dom.nivelSelect.value = gameState.nivel;
+                dom.nivelSelect.disabled = true;
+                dom.playerNameInput.value = state.playerName;
+                updateUI();
+                dom.toleranciaErros.textContent = `Tolerância de erros: ${state.maxErros}`;
+                dom.timer.textContent = `Tempo Restante: ${formatTime(state.timeRemaining)}`;
+                dom.elapsedTimer.textContent = `Tempo Decorrido: ${formatTime(state.elapsedTime)}`;
+
+                // Rebuild game board
+                dom.jogo.innerHTML = '';
+                state.cartas = [];
+                const totalCartas = state.imagens.length;
+                const colunas = 4;
+                const linhas = Math.ceil(totalCartas / colunas);
+                dom.jogo.style.gridTemplateColumns = `repeat(${colunas}, 1fr)`;
+                dom.jogo.style.gridTemplateRows = `repeat(${linhas}, auto)`;
+
+                gameState.cartas.forEach(cartaState => {
+                    const carta = document.createElement('div');
+                    carta.className = 'carta';
+                    carta.dataset.imgSrc = cartaState.imgSrc;
+                    carta.dataset.id = cartaState.id;
+                    if (cartaState.isFlipped) carta.classList.add('virada');
+                    if (cartaState.isMatched) carta.classList.add('combinada');
+                    if (cartaState.isHidden) carta.style.visibility = 'hidden';
+
+                    const img = document.createElement('img');
+                    img.src = cartaState.imgSrc;
+                    img.alt = 'Imagem da carta';
+                    img.onerror = () => { img.src = 'https://via.placeholder.com/100?text=Carta'; };
+                    carta.appendChild(img);
+
+                    carta.addEventListener('click', virarCarta);
+                    dom.jogo.appendChild(carta);
+                    state.cartas.push(carta);
+                });
+
+                // Add placeholder cards for empty slots
+                const totalSlots = colunas * linhas;
+                for (let i = state.cartas.length; i < totalSlots; i++) {
+                    const placeholder = document.createElement('div');
+                    placeholder.className = 'carta';
+                    placeholder.style.visibility = 'hidden';
+                    dom.jogo.appendChild(placeholder);
+                }
+
+                state.primeiraCarta = gameState.primeiraCarta ? state.cartas.find(c => c.dataset.id === gameState.primeiraCarta) : null;
+                state.segundaCarta = gameState.primeiraCarta ? state.cartas.find(c => c.dataset.id === gameState.segundaCarta) : null;
+
+                // Update ranking, ensuring no duplicates
+                state.ranking = state.ranking.filter(entry => entry.name !== state.playerName);
+                state.ranking.push({
+                    name: state.playerName,
+                    level: gameState.nivel,
+                    movements: state.movimentos,
+                    errors: state.erros,
+                    elapsedTime: state.elapsedTime,
+                    paresEncontrados: state.paresEncontrados
+                });
+                updateRankingDisplay();
+                localStorage.setItem('memoryGameRanking', JSON.stringify(state.ranking));
+
+                if (state.jogoIniciado) startTimer();
+
+                dom.musicTrackImage.src = config.musicTrackImages[state.currentMusicIndex];
+                dom.playPauseButton.textContent = state.isMusicPlaying ? '⏸' : '▶';
+                if (state.isMusicPlaying) playMusic();
+                updateSoundWave();
+
+                alert('Jogo carregado com sucesso!');
+            } catch (e) {
+                console.error('Erro ao carregar jogo:', e);
+                alert('Erro ao carregar o jogo salvo. Iniciando novo jogo.');
+                inicializarJogo();
+            }
+        }
+
+        function enviarMensagem() {
+            const nome = document.getElementById('nome').value;
+            const email = document.getElementById('email').value;
+            const mensagem = document.getElementById('mensagem').value;
+            if (nome && email && mensagem) {
+                alert('Mensagem enviada com sucesso! Entraremos em contato em breve.');
+                document.getElementById('nome').value = '';
+                document.getElementById('email').value = '';
+                document.getElementById('mensagem').value = '';
+            } else {
+                alert('Por favor, preencha todos os campos.');
+            }
+        }
+
+        function openTab(evt, tabName) {
+            document.querySelectorAll('.main-tabs > .tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+            if (evt.currentTarget) {
+                evt.currentTarget.classList.add('active');
+            } else {
+                document.querySelector(`.tab[onclick*="${tabName}"]`).classList.add('active');
+            }
+            document.getElementById(tabName).classList.add('active');
+        }
+
+        // Event listeners
+        document.addEventListener('DOMContentLoaded', () => {
+            inicializarJogo();
+
+            dom.playerNameInput.addEventListener('input', () => {
+                checkPlayerName();
+                if (state.somCartasLigado) playSound(audio.key);
+            });
+
+            dom.nivelSelect.addEventListener('change', () => {
+                if (state.jogoIniciado) {
+                    alert('Finalize ou reinicie o jogo para mudar o nível de dificuldade.');
+                    dom.nivelSelect.value = dom.nivelSelect.dataset.lastValue;
+                } else {
+                    dom.nivelSelect.dataset.lastValue = dom.nivelSelect.value;
+                    inicializarJogo();
+                }
+            });
+            dom.nivelSelect.dataset.lastValue = dom.nivelSelect.value;
+
+            // Unified hover sound for buttons and links
+            document.addEventListener('mouseover', (event) => {
+                const target = event.target.closest('#iniciar, #reiniciar, #salvar, #carregar, #musica-prev, #musica-play-pause, #musica-next, #som-controle, .main-tabs .tab, .social-media a, .links-list a, #ranking-link a, .copyright a, .contact-form button');
+                if (target && state.somCartasLigado) {
+                    playSound(audio.botao1);
+                }
+            });
+
+            // Click sound for non-specific elements
+            document.addEventListener('click', event => {
+                const isInteractiveElement = event.target.closest('.carta, #iniciar, #reiniciar, #salvar, #carregar, #musica-prev, #musica-play-pause, #musica-next, #som-controle, .main-tabs .tab, .social-media a, .links-list a, #ranking-link a, .copyright a, .contact-form button, #player-name, #nivel-dificuldade');
+                if (!isInteractiveElement && state.somCartasLigado) {
+                    playSound(audio.click);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
