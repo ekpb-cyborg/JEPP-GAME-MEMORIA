@@ -496,6 +496,7 @@
         <div class="tab" onclick="openTab(event, 'contato')">Contato</div>
         <div class="tab" onclick="openTab(event, 'ekpb')">EKPB Digital Music ©</div>
         <div class="tab" onclick="openTab(event, 'instrucoes')">Instruções</div>
+        <div class="tab" onclick="openTab(event, 'jogos-tab')">+Jogos</div>
     </div>
     
     <div id="jogo-tab" class="tab-content active">
@@ -588,13 +589,13 @@
             <p><i class="fab fa-youtube"></i> YouTube: <a href="https://youtube.com/@ekpbdigitalmusic" target="_blank">@ekpbdigitalmusic</a></p>
             <p><i class="fab fa-tiktok"></i> TikTok: <a href="https://tiktok.com/@ekpbdigitalmusic" target="_blank">@ekpbdigitalmusic</a></p>
             <p><i class="fas fa-video"></i> Kwai: <a href="https://kwai.com/@ekpbdigitalmusic" target="_blank">@ekpbdigitalmusic</a></p>
-            <p><i class="fas fa-envelope"></i> Email: <a href="mailto:ekpbdigitalmusic@gmail.com">ekpbdigitalmusic@gmail.com</a></p>
+            <p><i class="fas fa-envelope"></i> Email: <a href="/cdn-cgi/l/email-protection#4e2b253e2c2a2729273a2f22233b3d272d0e29232f2722602d2123"><span class="__cf_email__" data-cfemail="739c12091b1d101e100d1815140c0a101a391e14181015571a1614">[email&#160;protected]</span></a></p>
             <p><strong>Compositor</strong></p>
             <p><i class="fab fa-instagram"></i> Instagram: <a href="https://instagram.com/edsonk.palacio" target="_blank">@edsonk.palacio</a></p>
             <p><i class="fab fa-youtube"></i> YouTube: <a href="https://youtube.com/@edsonkpalacioo" target="_blank">@edsonkpalacioo</a></p>
             <p><i class="fab fa-tiktok"></i> TikTok: <a href="https://tiktok.com/@edsonkpalacio" target="_blank">@edsonkpalacio</a></p>
             <p><i class="fas fa-video"></i> Kwai: <a href="https://kwai.com/@edsonkpalacio" target="_blank">@edsonkpalacio</a></p>
-            <p><i class="fas fa-envelope"></i> Email: <a href="mailto:edsonkpalacio@gmail.com">edsonkpalacio@gmail.com</a></p>
+            <p><i class="fas fa-envelope"></i> Email: <a href="/cdn-cgi/l/email-protection#53d677607c7d7863727f72707a7c53747e727a7f3d707c7e"><span class="__cf_email__" data-cfemail="a6e3c2d5c9c8cdd6c7cac7c5cfc9e6c1cbc7cfca88c5c9cb">[email&#160;protected]</span></a></p>
             <p><i class="fab fa-whatsapp"></i> Cel: <a href="https://wa.me/5588996812029" target="_blank">(88) 99681-2029</a></p>
         </div>
     </div>
@@ -684,10 +685,18 @@
         </ul>
     </div>
     
+    <div id="jogos-tab" class="tab-content">
+        <h2>+Jogos</h2>
+        <ul class="links-list">
+            <li><i class="fas fa-gamepad"></i> <a href="https://ekpb-cyborg.github.io/Game-Busca-Palavras/" target="_blank">Caça Palavras</a></li>
+        </ul>
+    </div>
+    
     <div class="copyright">
          EKPB Digital Music © | Powered by <a href="https://ekpbdigitalmusic.my.canva.site/" target="_blank">Edson Palácio</a>
     </div>
     
+    <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script>
     <script>
         // Game configuration
         const config = {
@@ -1493,14 +1502,6 @@
                 const target = event.target.closest('#iniciar, #reiniciar, #salvar, #carregar, #musica-prev, #musica-play-pause, #musica-next, #som-controle, .main-tabs .tab, .social-media a, .links-list a, #ranking-link a, .copyright a, .contact-form button');
                 if (target && state.somCartasLigado && state.audioUnlocked) {
                     playSound(audio.botao1);
-                }
-            });
-
-            // Click sound for non-specific elements
-            document.addEventListener('click', event => {
-                const isInteractiveElement = event.target.closest('.carta, #iniciar, #reiniciar, #salvar, #carregar, #musica-prev, #musica-play-pause, #musica-next, #som-controle, .main-tabs .tab, .social-media a, .links-list a, #ranking-link a, .copyright a, .contact-form button, #player-name, #nivel-dificuldade');
-                if (!isInteractiveElement && state.somCartasLigado && state.audioUnlocked) {
-                    playSound(audio.click);
                 }
             });
         });
